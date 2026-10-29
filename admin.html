@@ -20,7 +20,9 @@ small,.muted{color:#a5ad95}
 .stat{background:#252b20;padding:17px;border-radius:13px}
 .stat strong{display:block;font-size:27px;color:#c0c79e}
 button{font:inherit;border:0;border-radius:9px;padding:10px 14px;font-weight:800;cursor:pointer;background:#a3a785;color:#171912;margin:3px}
-.secondary{background:#30372a;color:#fff}.danger{background:#633b35;color:white}
+button:disabled{opacity:.5;cursor:not-allowed}
+.secondary{background:#30372a;color:#fff}
+.danger{background:#633b35;color:white}
 .card{background:#171b15;border:1px solid #343b2c;border-radius:12px;padding:13px;margin:10px 0}
 input,textarea{width:100%;padding:12px;background:#11140f;color:white;border:1px solid #414735;border-radius:9px;margin:7px 0;font-family:inherit}
 .row{display:flex;gap:9px;flex-wrap:wrap;align-items:center}
@@ -29,19 +31,31 @@ input,textarea{width:100%;padding:12px;background:#11140f;color:white;border:1px
 .avatar{width:43px;height:43px;object-fit:cover;border-radius:50%;background:#30372a}
 .muted{font-size:13px}
 .badge{background:#30372a;color:#c0c79e;border-radius:20px;padding:4px 10px;font-size:12px}
+.msg{overflow-wrap:anywhere}
 </style>
 </head>
 <body>
+
 <header>
- <div><div class="logo">KAREN STORE</div><small>OWNER CONTROL CENTER</small></div>
- <div><button class="secondary" onclick="location.href='index.html'">المتجر</button><button class="danger" onclick="logout()">خروج</button></div>
+ <div>
+  <div class="logo">KAREN STORE</div>
+  <small>OWNER CONTROL CENTER</small>
+ </div>
+ <div>
+  <button class="secondary" onclick="location.href='index.html'">المتجر</button>
+  <button class="danger" onclick="logout()">خروج</button>
+ </div>
 </header>
-<div id="message">جاري التحقق من حسابك...</div>
+
+<div id="message" class="msg">جاري التحقق من حسابك...</div>
+
 <main id="dashboard" class="hidden">
+
  <div class="panel">
   <h1>مرحبًا بك في لوحة الأونر</h1>
   <p class="muted">تحكم كامل في منتجات KAREN STORE والطلبات والمشترين.</p>
  </div>
+
  <div class="grid">
   <div class="stat">المشترون<strong id="buyers">0</strong></div>
   <div class="stat">إجمالي الطلبات<strong id="ordersCount">0</strong></div>
@@ -49,6 +63,7 @@ input,textarea{width:100%;padding:12px;background:#11140f;color:white;border:1px
   <div class="stat">المنتجات<strong id="productsCount">0</strong></div>
   <div class="stat">إجمالي المبيعات<strong id="sales">0</strong></div>
  </div>
+
  <div class="panel" style="margin-top:16px">
   <h2>إدارة المتجر</h2>
   <div class="row">
@@ -59,14 +74,17 @@ input,textarea{width:100%;padding:12px;background:#11140f;color:white;border:1px
    <button class="secondary" onclick="loadOrders('pending')">الطلبات المنتظرة</button>
   </div>
  </div>
+
  <div class="panel">
   <h2>المنتجات</h2>
-  <div id="products"></div>
+  <div id="products">جاري التحميل...</div>
  </div>
+
  <div class="panel">
   <h2>المشترون</h2>
-  <div id="buyersList"></div>
+  <div id="buyersList">جاري التحميل...</div>
  </div>
+
  <div class="panel">
   <h2>الطلبات</h2>
   <div class="row">
@@ -75,108 +93,348 @@ input,textarea{width:100%;padding:12px;background:#11140f;color:white;border:1px
    <button class="secondary" onclick="loadOrders('delivered')">تم التسليم</button>
    <button class="secondary" onclick="loadOrders('rejected')">مرفوضة</button>
   </div>
-  <div id="orders"></div>
+  <div id="orders">جاري التحميل...</div>
  </div>
+
 </main>
+
 <script>
 const SUPABASE_URL="https://jwikjdbqlzucmkihmyci.supabase.co";
 const SUPABASE_KEY="sb_publishable_RWwEfQJdI0GHddFsqCSYR_KPGqRYR";
 const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+
 const $=id=>document.getElementById(id);
-const safe=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const safe=v=>String(v??"").replace(/[&<>"']/g,c=>({
+ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+}[c]));
+
 let orderData=[];
+let started=false;
 
 async function start(){
- const {data:{session}}=await db.auth.getSession();
- if(!session){$("message").textContent="سجّل الدخول أولًا.";return}
- const {data:admin,error}=await db.from("admin_users").select("user_id").eq("user_id",session.user.id).maybeSingle();
- if(error||!admin){$("message").textContent="هذا الحساب لا يملك صلاحية الأونر.";return}
- $("message").textContent="تم التحقق من صلاحيات الأونر.";
- $("dashboard").classList.remove("hidden");
- await Promise.all([loadStats(),loadProducts(),loadOrders("all"),loadBuyers()]);
+ if(started)return;
+ started=true;
+
+ try{
+  const {data:{session},error:sessionError}=await db.auth.getSession();
+
+  if(sessionError||!session){
+   $("message").textContent="سجّل الدخول أولًا.";
+   return;
+  }
+
+  const {data:admin,error:adminError}=await db
+   .from("admin_users")
+   .select("user_id")
+   .eq("user_id",session.user.id)
+   .maybeSingle();
+
+  if(adminError||!admin){
+   $("message").textContent="هذا الحساب لا يملك صلاحية الأونر.";
+   return;
+  }
+
+  $("message").textContent="تم التحقق من صلاحيات الأونر.";
+  $("dashboard").classList.remove("hidden");
+
+  await Promise.all([
+   loadStats(),
+   loadProducts(),
+   loadOrders("all"),
+   loadBuyers()
+  ]);
+
+ }catch(error){
+  $("message").textContent="حدث خطأ أثناء التحقق: "+error.message;
+ }
 }
-async function logout(){await db.auth.signOut();location.href="register.html"}
+
+async function logout(){
+ await db.auth.signOut();
+ location.href="register.html";
+}
 
 async function loadStats(){
- const [{data:orders},{data:products},{data:profiles}]=await Promise.all([
- db.from("orders").select("*"),
- db.from("products").select("id"),
- db.from("profiles").select("id")
+ const [ordersResult,productsResult,profilesResult]=await Promise.all([
+  db.from("orders").select("user_id,status,total_price"),
+  db.from("products").select("id"),
+  db.from("profiles").select("id")
  ]);
- orders=orders||[];
+
+ if(ordersResult.error){
+  $("message").textContent="تعذر تحميل الإحصائيات: "+ordersResult.error.message;
+  return;
+ }
+
+ if(productsResult.error){
+  $("message").textContent="تعذر تحميل المنتجات: "+productsResult.error.message;
+  return;
+ }
+
+ const orders=ordersResult.data||[];
+ const products=productsResult.data||[];
+
  $("ordersCount").textContent=orders.length;
  $("pending").textContent=orders.filter(x=>x.status==="pending").length;
- $("productsCount").textContent=(products||[]).length;
+ $("productsCount").textContent=products.length;
  $("buyers").textContent=new Set(orders.map(x=>x.user_id)).size;
- $("sales").textContent=orders.filter(x=>x.status==="delivered").reduce((n,x)=>n+Number(x.total_price),0);
+ $("sales").textContent=orders
+  .filter(x=>x.status==="delivered")
+  .reduce((n,x)=>n+Number(x.total_price||0),0);
 }
 
 async function loadProducts(){
- const {data,error}=await db.from("products").select("*").order("created_at",{ascending:false});
- if(error){$("products").textContent=error.message;return}
- $("products").innerHTML=(data||[]).map(p=>`
- <div class="card">
-  <div class="row"><div><b>${safe(p.name)}</b><p class="muted">${Number(p.price)} نقطة · المخزون ${Number(p.stock)} · ${p.is_active?"نشط":"متوقف"}</p></div>
-  <button class="secondary" onclick="editProduct('${p.id}',${Number(p.price)},${Number(p.stock)})">تعديل</button>
-  <button class="danger" onclick="removeProduct('${p.id}')">إزالة</button></div>
- </div>`).join("")||"لا توجد منتجات.";
- $("productsCount").textContent=(data||[]).length;
+ const box=$("products");
+ box.textContent="جاري تحميل المنتجات...";
+
+ const {data,error}=await db
+  .from("products")
+  .select("*")
+  .order("created_at",{ascending:false});
+
+ if(error){
+  box.textContent="تعذر تحميل المنتجات: "+error.message;
+  return;
+ }
+
+ const rows=data||[];
+
+ box.innerHTML=rows.map(p=>`
+  <div class="card">
+   <div class="row">
+    <div>
+     <b>${safe(p.name)}</b>
+     <p class="muted">
+      ${Number(p.price)} نقطة · المخزون ${Number(p.stock)}
+      · ${p.is_active?"نشط":"متوقف"}
+     </p>
+    </div>
+    <button class="secondary"
+     onclick="editProduct('${p.id}',${Number(p.price)},${Number(p.stock)})">
+     تعديل
+    </button>
+    <button class="danger"
+     onclick="removeProduct('${p.id}')">
+     ${p.is_active?"إيقاف":"إعادة تفعيل"}
+    </button>
+   </div>
+  </div>
+ `).join("")||"لا توجد منتجات.";
+
+ $("productsCount").textContent=rows.length;
 }
+
 async function editProduct(id,price,stock){
- const p=prompt("السعر الجديد:",price);if(p===null)return;
- const s=prompt("المخزون الجديد:",stock);if(s===null)return;
- if(!Number.isInteger(Number(p))||Number(p)<0||!Number.isInteger(Number(s))||Number(s)<0){alert("القيم غير صحيحة.");return}
- const {error}=await db.from("products").update({price:Number(p),stock:Number(s)}).eq("id",id);
- if(error){alert(error.message);return}
- await loadProducts();await loadStats();
+ const newPrice=prompt("السعر الجديد:",price);
+ if(newPrice===null)return;
+
+ const newStock=prompt("المخزون الجديد:",stock);
+ if(newStock===null)return;
+
+ const p=Number(newPrice);
+ const s=Number(newStock);
+
+ if(newPrice.trim()===""||newStock.trim()===""||
+    !Number.isSafeInteger(p)||p<0||
+    !Number.isSafeInteger(s)||s<0){
+  alert("القيم غير صحيحة.");
+  return;
+ }
+
+ const {error}=await db
+  .from("products")
+  .update({price:p,stock:s})
+  .eq("id",id);
+
+ if(error){
+  alert("تعذر تعديل المنتج: "+error.message);
+  return;
+ }
+
+ await loadProducts();
+ await loadStats();
 }
+
 async function removeProduct(id){
- if(!confirm("هل تريد إزالة هذا المنتج من المتجر؟"))return;
- const {error}=await db.from("products").update({is_active:false}).eq("id",id);
- if(error){alert(error.message);return}
- await loadProducts();await loadStats();
+ const {data:product,error:fetchError}=await db
+  .from("products")
+  .select("is_active")
+  .eq("id",id)
+  .single();
+
+ if(fetchError){
+  alert(fetchError.message);
+  return;
+ }
+
+ const nextState=!product.is_active;
+ const message=nextState
+  ?"هل تريد إعادة تفعيل المنتج؟"
+  :"هل تريد إيقاف ظهور المنتج في المتجر؟";
+
+ if(!confirm(message))return;
+
+ const {error}=await db
+  .from("products")
+  .update({is_active:nextState})
+  .eq("id",id);
+
+ if(error){
+  alert(error.message);
+  return;
+ }
+
+ await loadProducts();
+ await loadStats();
 }
+
 async function loadBuyers(){
- const {data:orders}=await db.from("orders").select("user_id");
- const ids=[...new Set((orders||[]).map(x=>x.user_id))];
- if(!ids.length){$("buyersList").textContent="لا يوجد مشترون حتى الآن.";return}
- const {data:profiles}=await db.from("profiles").select("id,roblox_username,avatar_url").in("id",ids);
- $("buyersList").innerHTML=(profiles||[]).map(p=>`
- <div class="card row"><img class="avatar" src="${safe(p.avatar_url||"https://placehold.co/80")}" onerror="this.style.display='none'">
- <div><b>${safe(p.roblox_username||"اسم غير محدد")}</b><p class="muted">حساب مسجل في المتجر</p></div></div>`).join("");
+ const box=$("buyersList");
+ box.textContent="جاري تحميل المشترين...";
+
+ const {data:orders,error}=await db
+  .from("orders")
+  .select("user_id");
+
+ if(error){
+  box.textContent="تعذر تحميل المشترين: "+error.message;
+  return;
+ }
+
+ const ids=[...new Set((orders||[]).map(x=>x.user_id).filter(Boolean))];
+
+ if(!ids.length){
+  box.textContent="لا يوجد مشترون حتى الآن.";
+  return;
+ }
+
+ const {data:profiles,error:profileError}=await db
+  .from("profiles")
+  .select("id,roblox_username,avatar_url")
+  .in("id",ids);
+
+ if(profileError){
+  box.textContent="تعذر تحميل بيانات المشترين: "+profileError.message;
+  return;
+ }
+
+ box.innerHTML=(profiles||[]).map(p=>`
+  <div class="card row">
+   <img class="avatar"
+    src="${safe(p.avatar_url||"https://placehold.co/80")}"
+    alt=""
+    onerror="this.style.display='none'">
+   <div>
+    <b>${safe(p.roblox_username||"اسم غير محدد")}</b>
+    <p class="muted">حساب مسجل في المتجر</p>
+   </div>
+  </div>
+ `).join("")||"لا توجد بيانات مشترين.";
 }
+
 async function loadOrders(filter){
- const {data,error}=await db.from("orders").select("*").order("created_at",{ascending:false});
- if(error){$("orders").textContent=error.message;return}
+ const box=$("orders");
+ box.textContent="جاري تحميل الطلبات...";
+
+ const {data,error}=await db
+  .from("orders")
+  .select("*")
+  .order("created_at",{ascending:false});
+
+ if(error){
+  box.textContent="تعذر تحميل الطلبات: "+error.message;
+  return;
+ }
+
  orderData=data||[];
- const ids=[...new Set(orderData.map(x=>x.user_id))];
- const {data:profiles}=ids.length?await db.from("profiles").select("id,roblox_username,avatar_url").in("id",ids):{data:[]};
- const map=Object.fromEntries((profiles||[]).map(x=>[x.id,x]));
- const rows=filter==="all"?orderData:orderData.filter(x=>x.status===filter);
- $("orders").innerHTML=rows.map(o=>{const p=map[o.user_id]||{};return `
- <div class="card">
- <b>${safe(p.roblox_username||"غير معروف")}</b>
- <p>${safe(o.product_name)} × ${o.quantity}</p>
- <p class="muted">${o.total_price} نقطة · <span class="badge">${safe(o.status)}</span></p>
- ${o.rejection_reason?`<p class="muted">سبب الرفض: ${safe(o.rejection_reason)}</p>`:""}
- ${o.status==="pending"?`<button onclick="setStatus('${o.id}','delivered')">تأكيد التسليم</button><button class="danger" onclick="reject('${o.id}')">رفض</button>`:""}
- </div>`}).join("")||"لا توجد طلبات في هذا القسم.";
+
+ const ids=[...new Set(orderData.map(x=>x.user_id).filter(Boolean))];
+
+ let profiles=[];
+
+ if(ids.length){
+  const result=await db
+   .from("profiles")
+   .select("id,roblox_username,avatar_url")
+   .in("id",ids);
+
+  if(result.error){
+   box.textContent="تعذر تحميل أسماء المشترين: "+result.error.message;
+   return;
+  }
+
+  profiles=result.data||[];
+ }
+
+ const map=Object.fromEntries(profiles.map(x=>[x.id,x]));
+ const rows=filter==="all"
+  ?orderData
+  :orderData.filter(x=>x.status===filter);
+
+ box.innerHTML=rows.map(o=>{
+  const p=map[o.user_id]||{};
+
+  return `
+   <div class="card">
+    <b>${safe(p.roblox_username||"غير معروف")}</b>
+    <p>${safe(o.product_name)} × ${Number(o.quantity)}</p>
+    <p class="muted">
+     ${Number(o.total_price)} نقطة ·
+     <span class="badge">${safe(o.status)}</span>
+    </p>
+    ${o.rejection_reason
+     ?`<p class="muted">سبب الرفض: ${safe(o.rejection_reason)}</p>`
+     :""}
+    ${o.status==="pending"
+     ?`
+      <button onclick="setStatus('${o.id}','delivered')">تأكيد التسليم</button>
+      <button class="danger" onclick="reject('${o.id}')">رفض</button>
+     `:""}
+   </div>
+  `;
+ }).join("")||"لا توجد طلبات في هذا القسم.";
+
  $("ordersCount").textContent=orderData.length;
  $("pending").textContent=orderData.filter(x=>x.status==="pending").length;
 }
+
 async function setStatus(id,status){
  if(!confirm("تأكيد تسليم الطلب؟"))return;
- const {error}=await db.rpc("admin_set_order_status",{p_order_id:id,p_status:status,p_reason:null});
- if(error){alert(error.message);return}
- await loadOrders("all");await loadStats();
+
+ const {error}=await db.rpc("admin_set_order_status",{
+  p_order_id:id,
+  p_status:status,
+  p_reason:null
+ });
+
+ if(error){
+  alert("تعذر تحديث الطلب: "+error.message);
+  return;
+ }
+
+ await loadOrders("all");
+ await loadStats();
 }
+
 async function reject(id){
  const reason=prompt("اكتب سبب الرفض:");
  if(reason===null||!reason.trim())return;
- const {error}=await db.rpc("admin_set_order_status",{p_order_id:id,p_status:"rejected",p_reason:reason.trim()});
- if(error){alert(error.message);return}
- await loadOrders("all");await loadStats();
+
+ const {error}=await db.rpc("admin_set_order_status",{
+  p_order_id:id,
+  p_status:"rejected",
+  p_reason:reason.trim()
+ });
+
+ if(error){
+  alert("تعذر رفض الطلب: "+error.message);
+  return;
+ }
+
+ await loadOrders("all");
+ await loadStats();
 }
+
 start();
 </script>
 </body>
