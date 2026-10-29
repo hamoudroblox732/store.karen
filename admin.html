@@ -3,243 +3,180 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Owner Dashboard</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>KAREN STORE | Owner</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#11130f;--panel:#1c2019;--line:#343b2e;--green:#a3a785;--text:#f1f2e9;--muted:#a5aa99;--red:#d66c6c}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--text);font-family:Arial,sans-serif;padding:18px}
-header{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:22px}
-h1{font-size:23px;margin:0}
-h2{font-size:18px;margin:0 0 15px}
-small,.muted{color:var(--muted)}
-.panel{background:var(--panel);border:1px solid var(--line);border-radius:15px;padding:17px;margin-bottom:16px}
-input,textarea,button{font:inherit;border-radius:9px;padding:12px}
-input,textarea{width:100%;background:#11140f;color:white;border:1px solid var(--line);margin:5px 0 10px}
-button{border:0;background:var(--green);color:#171912;font-weight:bold;cursor:pointer;margin:3px}
-button.secondary{background:#343b2e;color:white}
-button.danger{background:#713d3d;color:white}
-button:disabled{opacity:.5}
-.row{display:flex;gap:8px;flex-wrap:wrap}
-.row>*{flex:1;min-width:120px}
-.card{border:1px solid var(--line);padding:13px;border-radius:12px;margin:10px 0;background:#171a14}
-.product,.order{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
-.product img,.avatar{width:55px;height:55px;object-fit:cover;border-radius:10px;background:#30352a}
-.info{flex:1;min-width:150px}
-.status{color:var(--green);font-size:13px}
+body{margin:0;background:#11130f;color:#eee;font-family:Cairo,sans-serif;padding:18px}
+header{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:24px}
+.logo{font-size:23px;color:#c0c79e;font-weight:900}
+h1{font-size:25px;margin:0}
+h2{font-size:18px}
+small,.muted{color:#a5ad95}
+.panel{background:#1b1f18;border:1px solid #343b2c;border-radius:16px;padding:17px;margin-bottom:16px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.stat{background:#252b20;padding:17px;border-radius:13px}
+.stat strong{display:block;font-size:27px;color:#c0c79e}
+button{font:inherit;border:0;border-radius:9px;padding:10px 14px;font-weight:800;cursor:pointer;background:#a3a785;color:#171912;margin:3px}
+.secondary{background:#30372a;color:#fff}.danger{background:#633b35;color:white}
+.card{background:#171b15;border:1px solid #343b2c;border-radius:12px;padding:13px;margin:10px 0}
+input,textarea{width:100%;padding:12px;background:#11140f;color:white;border:1px solid #414735;border-radius:9px;margin:7px 0;font-family:inherit}
+.row{display:flex;gap:9px;flex-wrap:wrap;align-items:center}
+.row>*{flex:1}
 .hidden{display:none!important}
-#message{padding:10px;color:var(--green)}
+.avatar{width:43px;height:43px;object-fit:cover;border-radius:50%;background:#30372a}
+.muted{font-size:13px}
+.badge{background:#30372a;color:#c0c79e;border-radius:20px;padding:4px 10px;font-size:12px}
 </style>
 </head>
 <body>
 <header>
- <div>
-  <h1>OWNER DASHBOARD</h1>
-  <small>HAMOUD STORE · إدارة المتجر</small>
- </div>
- <button class="secondary" onclick="logout()">تسجيل الخروج</button>
+ <div><div class="logo">KAREN STORE</div><small>OWNER CONTROL CENTER</small></div>
+ <div><button class="secondary" onclick="location.href='index.html'">المتجر</button><button class="danger" onclick="logout()">خروج</button></div>
 </header>
-
-<div id="message">جاري التحقق من صلاحياتك...</div>
-
+<div id="message">جاري التحقق من حسابك...</div>
 <main id="dashboard" class="hidden">
- <section class="panel">
-  <h2>إحصائيات المتجر</h2>
+ <div class="panel">
+  <h1>مرحبًا بك في لوحة الأونر</h1>
+  <p class="muted">تحكم كامل في منتجات KAREN STORE والطلبات والمشترين.</p>
+ </div>
+ <div class="grid">
+  <div class="stat">المشترون<strong id="buyers">0</strong></div>
+  <div class="stat">إجمالي الطلبات<strong id="ordersCount">0</strong></div>
+  <div class="stat">الطلبات المنتظرة<strong id="pending">0</strong></div>
+  <div class="stat">المنتجات<strong id="productsCount">0</strong></div>
+  <div class="stat">إجمالي المبيعات<strong id="sales">0</strong></div>
+ </div>
+ <div class="panel" style="margin-top:16px">
+  <h2>إدارة المتجر</h2>
   <div class="row">
-   <div class="card"><small>المنتجات</small><h2 id="productCount">0</h2></div>
-   <div class="card"><small>الطلبات</small><h2 id="orderCount">0</h2></div>
-   <div class="card"><small>طلبات معلقة</small><h2 id="pendingCount">0</h2></div>
+   <button onclick="location.href='add-product.html'">＋ إضافة منتج</button>
+   <button class="secondary" onclick="loadProducts()">إدارة المنتجات</button>
+   <button class="secondary" onclick="loadBuyers()">المشترون</button>
+   <button class="secondary" onclick="loadOrders('all')">إجمالي الطلبات</button>
+   <button class="secondary" onclick="loadOrders('pending')">الطلبات المنتظرة</button>
   </div>
- </section>
-
- <section class="panel">
-  <h2>إضافة منتج</h2>
-  <input id="newName" placeholder="اسم المنتج">
-  <textarea id="newDescription" placeholder="وصف المنتج"></textarea>
-  <input id="newImage" placeholder="رابط صورة المنتج">
-  <div class="row">
-   <input id="newPrice" type="number" min="1" placeholder="السعر بالروبوكس">
-   <input id="newStock" type="number" min="0" placeholder="الكمية">
-  </div>
-  <button onclick="addProduct()">إضافة المنتج</button>
- </section>
-
- <section class="panel">
+ </div>
+ <div class="panel">
   <h2>المنتجات</h2>
   <div id="products"></div>
- </section>
-
- <section class="panel">
+ </div>
+ <div class="panel">
+  <h2>المشترون</h2>
+  <div id="buyersList"></div>
+ </div>
+ <div class="panel">
   <h2>الطلبات</h2>
   <div class="row">
    <button class="secondary" onclick="loadOrders('all')">الكل</button>
-   <button class="secondary" onclick="loadOrders('pending')">المعلقة</button>
+   <button class="secondary" onclick="loadOrders('pending')">معلقة</button>
    <button class="secondary" onclick="loadOrders('delivered')">تم التسليم</button>
-   <button class="secondary" onclick="loadOrders('rejected')">المرفوضة</button>
+   <button class="secondary" onclick="loadOrders('rejected')">مرفوضة</button>
   </div>
   <div id="orders"></div>
- </section>
+ </div>
 </main>
-
 <script>
-const SUPABASE_URL = "https://jwikjdbqlzucmkihmyci.supabase.co";
-const SUPABASE_KEY = "sb_publishable_RWwEfQJdI0GHddFsqCSYR_KPGqRYR";
-const db = window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
-
-let currentUser = null;
-let allOrders = [];
-
-const el = id => document.getElementById(id);
-const escapeHTML = value => String(value ?? "").replace(/[&<>"']/g,c=>({
- "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
-}[c]));
-
-function message(text){el("message").textContent=text}
+const SUPABASE_URL="https://jwikjdbqlzucmkihmyci.supabase.co";
+const SUPABASE_KEY="sb_publishable_RWwEfQJdI0GHddFsqCSYR_KPGqRYR";
+const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+const $=id=>document.getElementById(id);
+const safe=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+let orderData=[];
 
 async function start(){
- const {data:{session},error} = await db.auth.getSession();
- if(error || !session){message("سجّل دخولك أولًا من صفحة register.html");return}
- currentUser=session.user;
-
- const {data:admin,error:adminError}=await db
-  .from("admin_users").select("user_id")
-  .eq("user_id",currentUser.id).maybeSingle();
-
- if(adminError || !admin){
-  message("ليس لديك صلاحية دخول لوحة الإدارة.");
-  return;
- }
-
- el("dashboard").classList.remove("hidden");
- message("تم التحقق من صلاحيات الإدارة.");
- await loadProducts();
- await loadOrders("all");
+ const {data:{session}}=await db.auth.getSession();
+ if(!session){$("message").textContent="سجّل الدخول أولًا.";return}
+ const {data:admin,error}=await db.from("admin_users").select("user_id").eq("user_id",session.user.id).maybeSingle();
+ if(error||!admin){$("message").textContent="هذا الحساب لا يملك صلاحية الأونر.";return}
+ $("message").textContent="تم التحقق من صلاحيات الأونر.";
+ $("dashboard").classList.remove("hidden");
+ await Promise.all([loadStats(),loadProducts(),loadOrders("all"),loadBuyers()]);
 }
+async function logout(){await db.auth.signOut();location.href="register.html"}
 
-async function logout(){
- await db.auth.signOut();
- location.href="register.html";
+async function loadStats(){
+ const [{data:orders},{data:products},{data:profiles}]=await Promise.all([
+ db.from("orders").select("*"),
+ db.from("products").select("id"),
+ db.from("profiles").select("id")
+ ]);
+ orders=orders||[];
+ $("ordersCount").textContent=orders.length;
+ $("pending").textContent=orders.filter(x=>x.status==="pending").length;
+ $("productsCount").textContent=(products||[]).length;
+ $("buyers").textContent=new Set(orders.map(x=>x.user_id)).size;
+ $("sales").textContent=orders.filter(x=>x.status==="delivered").reduce((n,x)=>n+Number(x.total_price),0);
 }
 
 async function loadProducts(){
  const {data,error}=await db.from("products").select("*").order("created_at",{ascending:false});
- if(error){message("تعذر تحميل المنتجات: "+error.message);return}
- el("productCount").textContent=data.length;
- el("products").innerHTML=data.map(p=>`
- <div class="card product">
-  <img src="${escapeHTML(p.image_url)}" onerror="this.style.display='none'">
-  <div class="info">
-   <b>${escapeHTML(p.name)}</b>
-   <div class="muted">${escapeHTML(p.price)} Robux · المخزون: ${escapeHTML(p.stock)}</div>
-   <small>${p.is_active?"نشط":"متوقف"}</small>
-  </div>
+ if(error){$("products").textContent=error.message;return}
+ $("products").innerHTML=(data||[]).map(p=>`
+ <div class="card">
+  <div class="row"><div><b>${safe(p.name)}</b><p class="muted">${Number(p.price)} نقطة · المخزون ${Number(p.stock)} · ${p.is_active?"نشط":"متوقف"}</p></div>
   <button class="secondary" onclick="editProduct('${p.id}',${Number(p.price)},${Number(p.stock)})">تعديل</button>
-  <button class="danger" onclick="toggleProduct('${p.id}',${Boolean(p.is_active)})">${p.is_active?"إيقاف":"تفعيل"}</button>
- </div>`).join("") || "<p class='muted'>لا توجد منتجات.</p>";
+  <button class="danger" onclick="removeProduct('${p.id}')">إزالة</button></div>
+ </div>`).join("")||"لا توجد منتجات.";
+ $("productsCount").textContent=(data||[]).length;
 }
-
-async function addProduct(){
- const name=el("newName").value.trim();
- const description=el("newDescription").value.trim();
- const image_url=el("newImage").value.trim();
- const price=Number(el("newPrice").value);
- const stock=Number(el("newStock").value);
-
- if(!name || !Number.isInteger(price) || price<1 || !Number.isInteger(stock) || stock<0){
-  alert("تأكد من الاسم والسعر والكمية.");return;
- }
- const {error}=await db.from("products").insert({
-  name,description,image_url,price,stock,is_active:true
- });
+async function editProduct(id,price,stock){
+ const p=prompt("السعر الجديد:",price);if(p===null)return;
+ const s=prompt("المخزون الجديد:",stock);if(s===null)return;
+ if(!Number.isInteger(Number(p))||Number(p)<0||!Number.isInteger(Number(s))||Number(s)<0){alert("القيم غير صحيحة.");return}
+ const {error}=await db.from("products").update({price:Number(p),stock:Number(s)}).eq("id",id);
  if(error){alert(error.message);return}
- ["newName","newDescription","newImage","newPrice","newStock"].forEach(id=>el(id).value="");
- await loadProducts();
- alert("تمت إضافة المنتج.");
+ await loadProducts();await loadStats();
 }
-
-async function editProduct(id,oldPrice,oldStock){
- const price=prompt("السعر الجديد:",oldPrice);
- if(price===null)return;
- const stock=prompt("الكمية الجديدة:",oldStock);
- if(stock===null)return;
- if(!Number.isInteger(Number(price)) || Number(price)<1 ||
-    !Number.isInteger(Number(stock)) || Number(stock)<0){
-  alert("السعر أو الكمية غير صحيح.");return;
- }
- const {error}=await db.from("products").update({
-  price:Number(price),stock:Number(stock)
- }).eq("id",id);
+async function removeProduct(id){
+ if(!confirm("هل تريد إزالة هذا المنتج من المتجر؟"))return;
+ const {error}=await db.from("products").update({is_active:false}).eq("id",id);
  if(error){alert(error.message);return}
- await loadProducts();
+ await loadProducts();await loadStats();
 }
-
-async function toggleProduct(id,active){
- const {error}=await db.from("products").update({is_active:!active}).eq("id",id);
- if(error){alert(error.message);return}
- await loadProducts();
+async function loadBuyers(){
+ const {data:orders}=await db.from("orders").select("user_id");
+ const ids=[...new Set((orders||[]).map(x=>x.user_id))];
+ if(!ids.length){$("buyersList").textContent="لا يوجد مشترون حتى الآن.";return}
+ const {data:profiles}=await db.from("profiles").select("id,roblox_username,avatar_url").in("id",ids);
+ $("buyersList").innerHTML=(profiles||[]).map(p=>`
+ <div class="card row"><img class="avatar" src="${safe(p.avatar_url||"https://placehold.co/80")}" onerror="this.style.display='none'">
+ <div><b>${safe(p.roblox_username||"اسم غير محدد")}</b><p class="muted">حساب مسجل في المتجر</p></div></div>`).join("");
 }
-
 async function loadOrders(filter){
  const {data,error}=await db.from("orders").select("*").order("created_at",{ascending:false});
- if(error){el("orders").textContent=error.message;return}
- allOrders=data;
- el("orderCount").textContent=data.length;
- el("pendingCount").textContent=data.filter(o=>o.status==="pending").length;
- const shown=filter==="all"?data:data.filter(o=>o.status===filter);
-
- if(!shown.length){el("orders").innerHTML="<p class='muted'>لا توجد طلبات.</p>";return}
-
- const userIds=[...new Set(shown.map(o=>o.user_id))];
- const {data:profiles}=await db.from("profiles")
-  .select("id,roblox_username,avatar_url,roblox_user_id")
-  .in("id",userIds);
- const profileMap=Object.fromEntries((profiles||[]).map(p=>[p.id,p]));
-
- el("orders").innerHTML=shown.map(o=>{
-  const p=profileMap[o.user_id]||{};
-  const avatar=p.avatar_url||"";
-  return `<div class="card">
-   <div class="order">
-    <img class="avatar" src="${escapeHTML(avatar)}" onerror="this.style.display='none'">
-    <div class="info">
-     <b>${escapeHTML(p.roblox_username||"غير محدد")}</b>
-     <div class="muted">Roblox ID: ${escapeHTML(p.roblox_user_id||"غير متوفر")}</div>
-     <div>${escapeHTML(o.product_name)} × ${escapeHTML(o.quantity)}</div>
-     <div>${escapeHTML(o.total_price)} Robux</div>
-     <div class="status">الحالة: ${escapeHTML(o.status)}</div>
-     ${o.rejection_reason?`<small>سبب الرفض: ${escapeHTML(o.rejection_reason)}</small>`:""}
-    </div>
-   </div>
-   ${o.status==="pending"?`
-    <div class="row">
-     <button onclick="setOrder('${o.id}','delivered')">تأكيد التسليم</button>
-     <button class="danger" onclick="rejectOrder('${o.id}')">رفض الطلب</button>
-    </div>`:""}
-  </div>`;
- }).join("");
+ if(error){$("orders").textContent=error.message;return}
+ orderData=data||[];
+ const ids=[...new Set(orderData.map(x=>x.user_id))];
+ const {data:profiles}=ids.length?await db.from("profiles").select("id,roblox_username,avatar_url").in("id",ids):{data:[]};
+ const map=Object.fromEntries((profiles||[]).map(x=>[x.id,x]));
+ const rows=filter==="all"?orderData:orderData.filter(x=>x.status===filter);
+ $("orders").innerHTML=rows.map(o=>{const p=map[o.user_id]||{};return `
+ <div class="card">
+ <b>${safe(p.roblox_username||"غير معروف")}</b>
+ <p>${safe(o.product_name)} × ${o.quantity}</p>
+ <p class="muted">${o.total_price} نقطة · <span class="badge">${safe(o.status)}</span></p>
+ ${o.rejection_reason?`<p class="muted">سبب الرفض: ${safe(o.rejection_reason)}</p>`:""}
+ ${o.status==="pending"?`<button onclick="setStatus('${o.id}','delivered')">تأكيد التسليم</button><button class="danger" onclick="reject('${o.id}')">رفض</button>`:""}
+ </div>`}).join("")||"لا توجد طلبات في هذا القسم.";
+ $("ordersCount").textContent=orderData.length;
+ $("pending").textContent=orderData.filter(x=>x.status==="pending").length;
 }
-
-async function setOrder(id,status){
- if(!confirm("تأكيد تغيير حالة الطلب؟"))return;
- const {error}=await db.rpc("admin_set_order_status",{
-  p_order_id:id,p_status:status,p_reason:null
- });
+async function setStatus(id,status){
+ if(!confirm("تأكيد تسليم الطلب؟"))return;
+ const {error}=await db.rpc("admin_set_order_status",{p_order_id:id,p_status:status,p_reason:null});
  if(error){alert(error.message);return}
- await loadOrders("all");
+ await loadOrders("all");await loadStats();
 }
-
-async function rejectOrder(id){
- const reason=prompt("اكتب سبب رفض الطلب:");
- if(reason===null)return;
- if(!reason.trim()){alert("اكتب سبب الرفض.");return}
- const {error}=await db.rpc("admin_set_order_status",{
-  p_order_id:id,p_status:"rejected",p_reason:reason.trim()
- });
+async function reject(id){
+ const reason=prompt("اكتب سبب الرفض:");
+ if(reason===null||!reason.trim())return;
+ const {error}=await db.rpc("admin_set_order_status",{p_order_id:id,p_status:"rejected",p_reason:reason.trim()});
  if(error){alert(error.message);return}
- await loadOrders("all");
+ await loadOrders("all");await loadStats();
 }
-
 start();
 </script>
 </body>
