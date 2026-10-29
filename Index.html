@@ -1,0 +1,121 @@
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ROBUX STORE</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#101114;color:#fff;font-family:Cairo,sans-serif}
+header{height:75px;padding:0 6%;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #26272b;background:#15161a}
+.logo{font-size:23px;font-weight:900;color:#a3a785}
+nav{display:flex;gap:20px;align-items:center}
+a{color:#ddd;text-decoration:none}
+button{font-family:inherit;cursor:pointer;border:0;border-radius:10px;padding:11px 17px;font-weight:800}
+.primary{background:#a3a785;color:#171912}
+.secondary{background:#25262b;color:white}
+.hero{margin:35px auto;width:88%;max-width:1100px;padding:55px 35px;border-radius:22px;background:linear-gradient(120deg,#292d20,#191b17);border:1px solid #444735}
+.hero h1{font-size:36px;margin:0 0 10px}
+.hero p{color:#c0c1b7}
+main{width:88%;max-width:1100px;margin:40px auto}
+.section-title{display:flex;justify-content:space-between;align-items:center}
+.products{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:18px;margin-top:22px}
+.product{background:#191a1f;border:1px solid #2b2c30;border-radius:16px;padding:15px}
+.product img{width:100%;height:145px;object-fit:cover;border-radius:10px;background:#25262b}
+.product h3{margin:12px 0 5px}
+.price{color:#a3a785;font-weight:900;margin:10px 0}
+.empty{color:#777;text-align:center;padding:35px}
+footer{text-align:center;padding:35px;color:#777;border-top:1px solid #25262b;margin-top:70px}
+#userInfo{display:none;align-items:center;gap:9px}
+#userInfo img{width:34px;height:34px;border-radius:50%}
+@media(max-width:600px){.hero h1{font-size:27px}header{padding:0 4%}nav{gap:9px}nav a{font-size:12px}.hero{padding:35px 22px}}
+</style>
+</head>
+<body>
+<header>
+<div class="logo">ROBUX STORE</div>
+<nav>
+<a href="index.html">المتجر</a>
+<a href="register.html">حسابي</a>
+<span id="userInfo"><img id="avatar"><span id="username"></span></span>
+<button class="primary" id="loginBtn" onclick="location.href='register.html'">دخول</button>
+</nav>
+</header>
+
+<section class="hero">
+<h1>متجر ROBUX</h1>
+<p>اكتشف المنتجات واطلب بسهولة باستخدام رصيدك الافتراضي.</p>
+<button class="primary" onclick="document.getElementById('store').scrollIntoView({behavior:'smooth'})">تصفح المنتجات</button>
+</section>
+
+<main id="store">
+<div class="section-title">
+<h2>المنتجات</h2>
+<span style="color:#a3a785">STORE</span>
+</div>
+<div class="products" id="products">
+<div class="empty">جاري تحميل المنتجات...</div>
+</div>
+</main>
+
+<footer>ROBUX STORE © 2026 — Virtual Currency Only</footer>
+
+<script>
+const SUPABASE_URL="https://jwikjdbqlzucmkihmyci.supabase.co";
+const SUPABASE_KEY="PASTE_YOUR_PUBLISHABLE_KEY_HERE";
+const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+
+async function loadProducts(){
+const box=document.getElementById('products');
+const {data,error}=await db.from('products')
+.select('id,name,description,image_url,price,stock')
+.eq('is_active',true).order('created_at',{ascending:false});
+
+if(error){box.innerHTML='<div class="empty">تعذر تحميل المنتجات.</div>';return;}
+if(!data.length){box.innerHTML='<div class="empty">لا توجد منتجات حاليًا.</div>';return;}
+
+box.innerHTML=data.map(p=>`
+<div class="product">
+<img src="${safe(p.image_url||'https://placehold.co/400x250/25262b/ffffff?text=Robux+Store')}" alt="">
+<h3>${safe(p.name)}</h3>
+<p style="color:#999;font-size:13px">${safe(p.description||'')}</p>
+<div class="price">${Number(p.price)} Robux</div>
+<p style="color:#999;font-size:12px">المخزون: ${p.stock}</p>
+<button class="primary" style="width:100%" onclick="buy('${p.id}')" ${p.stock<1?'disabled':''}>شراء</button>
+</div>`).join('');
+}
+
+function safe(v){
+return String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+async function buy(id){
+const {data:{user}}=await db.auth.getUser();
+if(!user){location.href='register.html';return;}
+const quantity=Number(prompt('كم الكمية التي تريد شراءها؟','1'));
+if(!Number.isInteger(quantity)||quantity<1)return;
+const {error}=await db.rpc('purchase_product',{p_product_id:id,p_quantity:quantity});
+if(error){alert(error.message);return;}
+alert('تم إنشاء طلبك بنجاح!');
+loadProducts();
+}
+
+async function loadUser(){
+const {data:{user}}=await db.auth.getUser();
+if(!user)return;
+const {data}=await db.from('profiles').select('roblox_username,avatar_url').eq('id',user.id).maybeSingle();
+if(!data)return;
+document.getElementById('loginBtn').style.display='none';
+document.getElementById('userInfo').style.display='flex';
+document.getElementById('username').textContent=data.roblox_username||'عضو';
+if(data.avatar_url)document.getElementById('avatar').src=data.avatar_url;
+}
+loadProducts();
+loadUser();
+</script>
+</body>
+</html>
