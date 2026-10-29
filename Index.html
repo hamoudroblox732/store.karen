@@ -5,117 +5,324 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>ROBUX STORE</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box}
-body{margin:0;background:#101114;color:#fff;font-family:Cairo,sans-serif}
-header{height:75px;padding:0 6%;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #26272b;background:#15161a}
-.logo{font-size:23px;font-weight:900;color:#a3a785}
-nav{display:flex;gap:20px;align-items:center}
-a{color:#ddd;text-decoration:none}
-button{font-family:inherit;cursor:pointer;border:0;border-radius:10px;padding:11px 17px;font-weight:800}
+body{margin:0;background:#101114;color:#eee;font-family:Cairo,sans-serif}
+header{height:72px;background:#17181c;border-bottom:1px solid #292a2e;display:flex;align-items:center;justify-content:space-between;padding:0 5%}
+.logo{font-size:22px;font-weight:900;color:#a3a785}
+button{font-family:inherit;border:0;border-radius:10px;padding:11px 17px;font-weight:800;cursor:pointer}
 .primary{background:#a3a785;color:#171912}
-.secondary{background:#25262b;color:white}
-.hero{margin:35px auto;width:88%;max-width:1100px;padding:55px 35px;border-radius:22px;background:linear-gradient(120deg,#292d20,#191b17);border:1px solid #444735}
-.hero h1{font-size:36px;margin:0 0 10px}
-.hero p{color:#c0c1b7}
-main{width:88%;max-width:1100px;margin:40px auto}
-.section-title{display:flex;justify-content:space-between;align-items:center}
-.products{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:18px;margin-top:22px}
-.product{background:#191a1f;border:1px solid #2b2c30;border-radius:16px;padding:15px}
-.product img{width:100%;height:145px;object-fit:cover;border-radius:10px;background:#25262b}
-.product h3{margin:12px 0 5px}
-.price{color:#a3a785;font-weight:900;margin:10px 0}
-.empty{color:#777;text-align:center;padding:35px}
-footer{text-align:center;padding:35px;color:#777;border-top:1px solid #25262b;margin-top:70px}
-#userInfo{display:none;align-items:center;gap:9px}
-#userInfo img{width:34px;height:34px;border-radius:50%}
-@media(max-width:600px){.hero h1{font-size:27px}header{padding:0 4%}nav{gap:9px}nav a{font-size:12px}.hero{padding:35px 22px}}
+.secondary{background:#292a2e;color:#fff}
+.danger{background:#492626;color:#ffaaaa}
+nav{display:flex;gap:9px}
+main{width:90%;max-width:1100px;margin:30px auto}
+.hero{background:linear-gradient(120deg,#292e20,#1b1d18);padding:45px 30px;border-radius:20px;border:1px solid #444936}
+.hero h1{font-size:34px;margin:0}
+.hero p{color:#bbb}
+.tabs{display:flex;gap:9px;flex-wrap:wrap;margin:25px 0}
+.section{display:none}
+.section.active{display:block}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:15px}
+.card{background:#191a1f;border:1px solid #2c2d32;padding:16px;border-radius:15px}
+.card img{width:100%;height:145px;object-fit:cover;border-radius:10px}
+input,textarea{width:100%;background:#101114;color:white;border:1px solid #37383e;border-radius:9px;padding:12px;margin:7px 0;font-family:inherit}
+label{font-size:13px;color:#aaa}
+.price{color:#a3a785;font-weight:900}
+.muted{color:#888;font-size:13px}
+.row{display:flex;gap:12px;align-items:center}
+.avatar{width:42px;height:42px;border-radius:50%;object-fit:cover;background:#333}
+.tutorial{background:#202126;padding:15px;border-radius:12px;margin:12px 0}
+.tutorial b{color:#a3a785}
+.code{font-size:23px;letter-spacing:2px;text-align:center;color:#a3a785;font-weight:900;padding:15px;background:#101114;border-radius:10px}
+.stat{font-size:25px;font-weight:900;color:#a3a785}
+table{width:100%;border-collapse:collapse;min-width:580px}
+td,th{text-align:right;padding:12px;border-bottom:1px solid #303137;font-size:13px}
+.table-wrap{overflow-x:auto}
+.status{color:#d6c58a}
+.hidden{display:none!important}
+footer{text-align:center;color:#777;padding:30px}
+@media(max-width:600px){header{padding:0 3%}.logo{font-size:17px}nav button{padding:9px;font-size:11px}.hero h1{font-size:27px}}
 </style>
 </head>
 <body>
+
 <header>
 <div class="logo">ROBUX STORE</div>
 <nav>
-<a href="index.html">المتجر</a>
-<a href="register.html">حسابي</a>
-<span id="userInfo"><img id="avatar"><span id="username"></span></span>
-<button class="primary" id="loginBtn" onclick="location.href='register.html'">دخول</button>
+<button class="secondary" onclick="show('store')">المتجر</button>
+<button class="secondary" onclick="show('account')">حسابي</button>
+<button class="secondary" onclick="show('admin')">الإدارة</button>
 </nav>
 </header>
 
-<section class="hero">
-<h1>متجر ROBUX</h1>
-<p>اكتشف المنتجات واطلب بسهولة باستخدام رصيدك الافتراضي.</p>
-<button class="primary" onclick="document.getElementById('store').scrollIntoView({behavior:'smooth'})">تصفح المنتجات</button>
+<main>
+<section id="store" class="section active">
+<div class="hero">
+<h1>ROBUX STORE</h1>
+<p>متجرك الافتراضي لمنتجات Roblox.</p>
+<p>عملة المتجر تجريبية ولا تمثل Robux حقيقية.</p>
+<button class="primary" onclick="document.getElementById('products').scrollIntoView({behavior:'smooth'})">تصفح المنتجات</button>
+</div>
+<div class="row" style="justify-content:space-between;margin:25px 0">
+<h2>المنتجات</h2>
+<span id="balance" class="price">الرصيد: --</span>
+</div>
+<div class="grid" id="products"><p>جاري التحميل...</p></div>
 </section>
 
-<main id="store">
-<div class="section-title">
-<h2>المنتجات</h2>
-<span style="color:#a3a785">STORE</span>
+<section id="account" class="section">
+<div class="card">
+<h2>تسجيل حساب Roblox</h2>
+<p class="muted">اربط حساب Roblox الخاص بك لإثبات ملكيته.</p>
+<label>اسم مستخدم Roblox</label>
+<input id="robloxName" placeholder="Roblox Username" autocomplete="off">
+<button class="primary" onclick="startVerification()">إنشاء كود التحقق</button>
+<div id="verifyArea" class="hidden">
+<div class="code" id="verificationCode"></div>
+<button class="secondary" onclick="copyCode()">نسخ الكود</button>
+<h3>طريقة وضع الكود في Bio</h3>
+<div class="tutorial">
+<b>1 — افتح Roblox</b>
+<p>سجّل دخولك في تطبيق Roblox أو الموقع الرسمي.</p>
 </div>
-<div class="products" id="products">
-<div class="empty">جاري تحميل المنتجات...</div>
+<div class="tutorial">
+<b>2 — افتح ملفك الشخصي</b>
+<p>اضغط على Profile من القائمة.</p>
 </div>
+<div class="tutorial">
+<b>3 — عدّل الوصف</b>
+<p>اضغط Edit Profile ثم ابحث عن خانة About.</p>
+</div>
+<div class="tutorial">
+<b>4 — ضع كود التحقق</b>
+<p>انسخ الكود والصقه في About ثم احفظ التغييرات.</p>
+</div>
+<div class="tutorial">
+<b>5 — ارجع للمتجر</b>
+<p>اضغط زر التحقق بعد حفظ الوصف.</p>
+</div>
+<button class="primary" onclick="verifyCode()">تحقق من الحساب</button>
+<p id="verifyMessage" class="muted"></p>
+</div>
+</div>
+</section>
+
+<section id="admin" class="section">
+<h2>لوحة الإدارة</h2>
+<div class="grid" style="margin-bottom:20px">
+<div class="card"><div class="stat" id="totalOrders">--</div><div class="muted">إجمالي الطلبات</div></div>
+<div class="card"><div class="stat" id="pendingOrders">--</div><div class="muted">طلبات معلقة</div></div>
+<div class="card"><div class="stat" id="totalProducts">--</div><div class="muted">المنتجات</div></div>
+</div>
+
+<div class="card">
+<h3>إضافة منتج</h3>
+<label>اسم المنتج</label>
+<input id="newName" placeholder="اسم المنتج">
+<label>الوصف</label>
+<textarea id="newDescription" placeholder="وصف المنتج"></textarea>
+<label>رابط صورة المنتج</label>
+<input id="newImage" placeholder="https://...">
+<label>السعر بالعملة الافتراضية</label>
+<input id="newPrice" type="number" min="0" placeholder="السعر">
+<label>الكمية</label>
+<input id="newStock" type="number" min="0" placeholder="المخزون">
+<button class="primary" onclick="addProduct()">إضافة المنتج</button>
+</div>
+
+<h3>إدارة المنتجات</h3>
+<div class="grid" id="adminProducts"></div>
+
+<h3>طلبات المشترين</h3>
+<div class="card table-wrap">
+<table>
+<thead><tr><th>المشتري</th><th>المنتج</th><th>الكمية</th><th>السعر</th><th>الحالة</th><th>الإجراء</th></tr></thead>
+<tbody id="orders"><tr><td colspan="6">سجل دخول الإدارة لعرض الطلبات</td></tr></tbody>
+</table>
+</div>
+</section>
 </main>
 
-<footer>ROBUX STORE © 2026 — Virtual Currency Only</footer>
+<footer>ROBUX STORE © 2026</footer>
 
 <script>
 const SUPABASE_URL="https://jwikjdbqlzucmkihmyci.supabase.co";
-const SUPABASE_KEY="PASTE_YOUR_PUBLISHABLE_KEY_HERE";
+const SUPABASE_KEY="sb_publishable_RWwEfQJdI0GHddFsqCSYRQ_KGPGqRYR";
 const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+
+let currentCode="";
+let currentUsername="";
+
+function show(id){
+document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+document.getElementById(id).classList.add('active');
+if(id==='store')loadProducts();
+if(id==='account')loadBalance();
+if(id==='admin')loadAdmin();
+}
+
+function safe(v){
+return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+async function getUser(){
+const {data:{user}}=await db.auth.getUser();
+return user;
+}
 
 async function loadProducts(){
 const box=document.getElementById('products');
 const {data,error}=await db.from('products')
-.select('id,name,description,image_url,price,stock')
-.eq('is_active',true).order('created_at',{ascending:false});
-
-if(error){box.innerHTML='<div class="empty">تعذر تحميل المنتجات.</div>';return;}
-if(!data.length){box.innerHTML='<div class="empty">لا توجد منتجات حاليًا.</div>';return;}
-
+.select('*').eq('is_active',true).order('created_at',{ascending:false});
+if(error){box.innerHTML='<p>تعذر تحميل المنتجات.</p>';return;}
+if(!data.length){box.innerHTML='<p>لا توجد منتجات حاليًا.</p>';return;}
 box.innerHTML=data.map(p=>`
-<div class="product">
+<div class="card">
 <img src="${safe(p.image_url||'https://placehold.co/400x250/25262b/ffffff?text=Robux+Store')}" alt="">
 <h3>${safe(p.name)}</h3>
-<p style="color:#999;font-size:13px">${safe(p.description||'')}</p>
-<div class="price">${Number(p.price)} Robux</div>
-<p style="color:#999;font-size:12px">المخزون: ${p.stock}</p>
-<button class="primary" style="width:100%" onclick="buy('${p.id}')" ${p.stock<1?'disabled':''}>شراء</button>
+<p class="muted">${safe(p.description)}</p>
+<div class="price">${p.price} Robux افتراضي</div>
+<p class="muted">المتوفر: ${p.stock}</p>
+<button class="primary" style="width:100%" ${p.stock<1?'disabled':''} onclick="buy('${p.id}')">شراء</button>
 </div>`).join('');
 }
 
-function safe(v){
-return String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+async function loadBalance(){
+const user=await getUser();
+if(!user){document.getElementById('balance').textContent='سجل الدخول أولًا';return;}
+const {data}=await db.from('wallets').select('balance').eq('user_id',user.id).maybeSingle();
+document.getElementById('balance').textContent='الرصيد: '+(data?.balance??0)+' Robux افتراضي';
 }
 
 async function buy(id){
-const {data:{user}}=await db.auth.getUser();
-if(!user){location.href='register.html';return;}
-const quantity=Number(prompt('كم الكمية التي تريد شراءها؟','1'));
-if(!Number.isInteger(quantity)||quantity<1)return;
-const {error}=await db.rpc('purchase_product',{p_product_id:id,p_quantity:quantity});
+const user=await getUser();
+if(!user){alert('يلزم تسجيل الدخول أولًا.');show('account');return;}
+const q=Number(prompt('أدخل الكمية','1'));
+if(!Number.isInteger(q)||q<1)return;
+const {error}=await db.rpc('purchase_product',{p_product_id:id,p_quantity:q});
 if(error){alert(error.message);return;}
-alert('تم إنشاء طلبك بنجاح!');
+alert('تم إنشاء الطلب!');
 loadProducts();
+loadBalance();
 }
 
-async function loadUser(){
-const {data:{user}}=await db.auth.getUser();
-if(!user)return;
-const {data}=await db.from('profiles').select('roblox_username,avatar_url').eq('id',user.id).maybeSingle();
-if(!data)return;
-document.getElementById('loginBtn').style.display='none';
-document.getElementById('userInfo').style.display='flex';
-document.getElementById('username').textContent=data.roblox_username||'عضو';
-if(data.avatar_url)document.getElementById('avatar').src=data.avatar_url;
+async function startVerification(){
+const name=document.getElementById('robloxName').value.trim();
+if(!name){alert('اكتب اسم Roblox');return;}
+const user=await getUser();
+if(!user){alert('يلزم إعداد تسجيل الدخول أولًا.');return;}
+currentUsername=name;
+document.getElementById('verifyMessage').textContent=
+'لم يتم إنشاء كود بعد. يلزم إعداد خدمة التحقق الآمنة على الخادم.';
+document.getElementById('verifyArea').classList.remove('hidden');
 }
+
+function copyCode(){
+if(!currentCode)return alert('خدمة التحقق غير مفعلة بعد.');
+navigator.clipboard.writeText(currentCode);
+alert('تم النسخ');
+}
+
+async function verifyCode(){
+document.getElementById('verifyMessage').textContent=
+'التحقق غير مفعّل حتى يتم نشر خدمة الخادم التي تفحص وصف Roblox.';
+}
+
+async function addProduct(){
+const name=document.getElementById('newName').value.trim();
+const description=document.getElementById('newDescription').value.trim();
+const image_url=document.getElementById('newImage').value.trim();
+const price=Number(document.getElementById('newPrice').value);
+const stock=Number(document.getElementById('newStock').value);
+if(!name||!Number.isFinite(price)||price<0||!Number.isInteger(stock)||stock<0){
+alert('تأكد من إدخال البيانات بشكل صحيح.');return;
+}
+const {data:{user}}=await db.auth.getUser();
+if(!user){alert('سجّل دخول الإدارة أولًا.');return;}
+const {error}=await db.from('products').insert({name,description,image_url,price,stock});
+if(error){alert(error.message);return;}
+alert('تمت إضافة المنتج');
+loadAdmin();
+}
+
+async function loadAdmin(){
+const user=await getUser();
+if(!user){document.getElementById('orders').innerHTML='<tr><td colspan="6">يلزم تسجيل دخول مخوّل للإدارة.</td></tr>';return;}
+const {data:admin}=await db.from('admin_users').select('user_id').eq('user_id',user.id).maybeSingle();
+if(!admin){document.getElementById('orders').innerHTML='<tr><td colspan="6">هذا الحساب ليس Admin.</td></tr>';return;}
+
+const [{data:orders},{data:products}] = await Promise.all([
+db.from('orders').select('*').order('created_at',{ascending:false}),
+db.from('products').select('*').order('created_at',{ascending:false})
+]);
+document.getElementById('totalOrders').textContent=orders?.length||0;
+document.getElementById('pendingOrders').textContent=orders?.filter(o=>o.status==='pending').length||0;
+document.getElementById('totalProducts').textContent=products?.length||0;
+
+document.getElementById('adminProducts').innerHTML=(products||[]).map(p=>`
+<div class="card">
+<b>${safe(p.name)}</b>
+<p class="muted">${p.price} Robux افتراضي — المخزون ${p.stock}</p>
+<button class="secondary" onclick="editProduct('${p.id}',${p.price},${p.stock})">تعديل السعر والكمية</button>
+<button class="danger" onclick="removeProduct('${p.id}')">إزالة</button>
+</div>`).join('');
+
+const ids=[...new Set((orders||[]).map(o=>o.user_id))];
+let profiles={};
+if(ids.length){
+const {data}=await db.from('profiles').select('id,roblox_username,avatar_url').in('id',ids);
+(data||[]).forEach(p=>profiles[p.id]=p);
+}
+document.getElementById('orders').innerHTML=(orders||[]).map(o=>{
+const p=profiles[o.user_id]||{};
+return `<tr>
+<td><div class="row"><img class="avatar" src="${safe(p.avatar_url||'https://placehold.co/80')}"><span>${safe(p.roblox_username||'غير مربوط')}</span></div></td>
+<td>${safe(o.product_name)}</td>
+<td>${o.quantity}</td>
+<td>${o.total_price}</td>
+<td>${safe(o.status)}</td>
+<td>${o.status==='pending'?`<button class="primary" onclick="setOrder('${o.id}','delivered')">تسليم</button><button class="danger" onclick="rejectOrder('${o.id}')">رفض</button>`:'-'}</td>
+</tr>`;
+}).join('')||'<tr><td colspan="6">لا توجد طلبات</td></tr>';
+}
+
+async function editProduct(id,oldPrice,oldStock){
+const price=Number(prompt('السعر الجديد',oldPrice));
+if(!Number.isFinite(price)||price<0)return;
+const stock=Number(prompt('الكمية الجديدة',oldStock));
+if(!Number.isInteger(stock)||stock<0)return;
+const {error}=await db.from('products').update({price,stock}).eq('id',id);
+if(error){alert(error.message);return;}
+loadAdmin();
+}
+
+async function removeProduct(id){
+if(!confirm('هل تريد إزالة المنتج؟'))return;
+const {error}=await db.from('products').update({is_active:false}).eq('id',id);
+if(error){alert(error.message);return;}
+loadAdmin();
+}
+
+async function setOrder(id,status){
+if(!confirm('تأكيد تسليم الطلب؟'))return;
+const {error}=await db.rpc('admin_set_order_status',{p_order_id:id,p_status:status,p_reason:null});
+if(error){alert(error.message);return;}
+alert('تم تحديث الطلب');
+loadAdmin();
+}
+
+async function rejectOrder(id){
+const reason=prompt('سبب رفض الطلب');
+if(reason===null)return;
+const {error}=await db.rpc('admin_set_order_status',{p_order_id:id,p_status:'rejected',p_reason:reason});
+if(error){alert(error.message);return;}
+alert('تم رفض الطلب وإرجاع الرصيد');
+loadAdmin();
+}
+
 loadProducts();
-loadUser();
 </script>
 </body>
 </html>
