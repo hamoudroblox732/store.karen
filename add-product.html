@@ -19,7 +19,7 @@ input,textarea{width:100%;padding:13px;background:#11140f;color:white;border:1px
 button{width:100%;padding:13px;border:0;border-radius:10px;font-family:inherit;font-weight:900;cursor:pointer;margin-top:9px}
 .primary{background:#a3a785;color:#171912}
 .secondary{background:#30372a;color:white}
-.msg{color:#c0c79e;font-size:13px}
+.msg{color:#c0c79e;font-size:13px;overflow-wrap:anywhere}
 </style>
 </head>
 <body>
@@ -28,43 +28,117 @@ button{width:100%;padding:13px;border:0;border-radius:10px;font-family:inherit;f
 <div class="panel">
 <h1>إضافة منتج جديد</h1>
 <p style="color:#a5ad95">أضف منتجك إلى مجموعة KAREN STORE.</p>
+
 <label>اسم المنتج</label>
-<input id="name" placeholder="اسم المنتج">
+<input id="name" maxlength="100" placeholder="اسم المنتج">
+
 <label>وصف المنتج</label>
-<textarea id="description" rows="4" placeholder="اكتب وصفًا مختصرًا"></textarea>
+<textarea id="description" rows="4" maxlength="1000" placeholder="اكتب وصفًا مختصرًا"></textarea>
+
 <label>رابط صورة المنتج</label>
 <input id="image" type="url" placeholder="https://...">
+
 <label>السعر بالنقاط الافتراضية</label>
-<input id="price" type="number" min="0" placeholder="السعر">
+<input id="price" type="number" min="0" step="1" placeholder="السعر">
+
 <label>كمية المخزون</label>
-<input id="stock" type="number" min="0" placeholder="الكمية">
-<button class="primary" onclick="add()">نشر المنتج</button>
+<input id="stock" type="number" min="0" step="1" placeholder="الكمية">
+
+<button class="primary" id="addButton" onclick="add()">نشر المنتج</button>
 <button class="secondary" onclick="location.href='admin.html'">العودة إلى الداشبورد</button>
 <p class="msg" id="message"></p>
 </div>
 </main>
+
 <script>
 const db=window.supabase.createClient(
  "https://jwikjdbqlzucmkihmyci.supabase.co",
  "sb_publishable_RWwEfQJdI0GHddFsqCSYR_KPGqRYR"
 );
+
+const $=id=>document.getElementById(id);
+
 async function add(){
- const {data:{user}}=await db.auth.getUser();
- if(!user){alert("سجّل الدخول أولًا.");location.href="register.html";return}
- const {data:admin}=await db.from("admin_users").select("user_id").eq("user_id",user.id).maybeSingle();
- if(!admin){alert("ليس لديك صلاحية الأونر.");location.href="index.html";return}
- const name=document.getElementById("name").value.trim();
- const description=document.getElementById("description").value.trim();
- const image_url=document.getElementById("image").value.trim();
- const price=Number(document.getElementById("price").value);
- const stock=Number(document.getElementById("stock").value);
- if(!name||!Number.isInteger(price)||price<0||!Number.isInteger(stock)||stock<0){
-  document.getElementById("message").textContent="تأكد من إدخال الاسم والسعر والكمية بشكل صحيح.";return;
+ const button=$("addButton");
+ const message=$("message");
+ message.textContent="";
+
+ button.disabled=true;
+ button.textContent="جاري النشر...";
+
+ try{
+  const {data:{user},error:authError}=await db.auth.getUser();
+
+  if(authError||!user){
+   alert("سجّل الدخول أولًا.");
+   location.href="register.html";
+   return;
+  }
+
+  const {data:admin,error:adminError}=await db
+   .from("admin_users")
+   .select("user_id")
+   .eq("user_id",user.id)
+   .maybeSingle();
+
+  if(adminError||!admin){
+   alert("ليس لديك صلاحية الأونر.");
+   location.href="index.html";
+   return;
+  }
+
+  const name=$("name").value.trim();
+  const description=$("description").value.trim();
+  const image_url=$("image").value.trim();
+  const price=Number($("price").value);
+  const stock=Number($("stock").value);
+
+  if(!name){
+   message.textContent="اكتب اسم المنتج.";
+   return;
+  }
+
+  if(!Number.isSafeInteger(price)||price<0||
+     $("price").value.trim()===""||
+     !Number.isSafeInteger(stock)||stock<0||
+     $("stock").value.trim()===""){
+   message.textContent="تأكد من إدخال السعر والكمية بشكل صحيح.";
+   return;
+  }
+
+  if(image_url){
+   try{
+    const url=new URL(image_url);
+    if(!["http:","https:"].includes(url.protocol))throw new Error();
+   }catch{
+    message.textContent="رابط الصورة غير صحيح.";
+    return;
+   }
+  }
+
+  const {error}=await db.from("products").insert({
+   name,
+   description,
+   image_url:image_url||null,
+   price,
+   stock,
+   is_active:true
+  });
+
+  if(error){
+   message.textContent="تعذر نشر المنتج: "+error.message;
+   return;
+  }
+
+  message.textContent="تم نشر المنتج بنجاح.";
+  ["name","description","image","price","stock"].forEach(id=>$(id).value="");
+
+ }catch(error){
+  message.textContent="حدث خطأ: "+error.message;
+ }finally{
+  button.disabled=false;
+  button.textContent="نشر المنتج";
  }
- const {error}=await db.from("products").insert({name,description,image_url,price,stock,is_active:true});
- if(error){document.getElementById("message").textContent=error.message;return}
- document.getElementById("message").textContent="تم نشر المنتج بنجاح.";
- ["name","description","image","price","stock"].forEach(id=>document.getElementById(id).value="");
 }
 </script>
 </body>
