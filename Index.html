@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -10,18 +9,18 @@
 <style>
 *{box-sizing:border-box}
 body{margin:0;background:#101114;color:#eee;font-family:Cairo,sans-serif}
-header{height:72px;background:#17181c;border-bottom:1px solid #292a2e;display:flex;align-items:center;justify-content:space-between;padding:0 5%}
+header{min-height:72px;background:#17181c;border-bottom:1px solid #292a2e;display:flex;align-items:center;justify-content:space-between;padding:12px 5%;gap:10px;flex-wrap:wrap}
 .logo{font-size:22px;font-weight:900;color:#a3a785}
 button{font-family:inherit;border:0;border-radius:10px;padding:11px 17px;font-weight:800;cursor:pointer}
+button:disabled{opacity:.4;cursor:not-allowed}
 .primary{background:#a3a785;color:#171912}
 .secondary{background:#292a2e;color:#fff}
 .danger{background:#492626;color:#ffaaaa}
-nav{display:flex;gap:9px}
+nav{display:flex;gap:9px;flex-wrap:wrap}
 main{width:90%;max-width:1100px;margin:30px auto}
 .hero{background:linear-gradient(120deg,#292e20,#1b1d18);padding:45px 30px;border-radius:20px;border:1px solid #444936}
 .hero h1{font-size:34px;margin:0}
 .hero p{color:#bbb}
-.tabs{display:flex;gap:9px;flex-wrap:wrap;margin:25px 0}
 .section{display:none}
 .section.active{display:block}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:15px}
@@ -40,23 +39,33 @@ label{font-size:13px;color:#aaa}
 table{width:100%;border-collapse:collapse;min-width:580px}
 td,th{text-align:right;padding:12px;border-bottom:1px solid #303137;font-size:13px}
 .table-wrap{overflow-x:auto}
-.status{color:#d6c58a}
 .hidden{display:none!important}
 footer{text-align:center;color:#777;padding:30px}
-@media(max-width:600px){header{padding:0 3%}.logo{font-size:17px}nav button{padding:9px;font-size:11px}.hero h1{font-size:27px}}
+.cart-count{background:#a3a785;color:#171912;border-radius:20px;padding:2px 8px;margin-right:4px}
+.quantity-controls{display:flex;align-items:center;gap:10px;margin:12px 0}
+.quantity-controls button{padding:5px 12px}
+.payment-option{background:#202126;border:1px solid #37383e;padding:20px;border-radius:14px;margin:12px 0}
+.payment-option h3{margin-top:0;color:#a3a785}
+.total{font-size:22px;color:#a3a785;font-weight:900}
+.notice{background:#25271f;border:1px solid #555b40;padding:14px;border-radius:12px;color:#ddd;margin:15px 0}
+@media(max-width:600px){
+header{padding:12px 3%}
+.logo{font-size:17px}
+nav button{padding:9px;font-size:11px}
+.hero h1{font-size:27px}
+}
 </style>
 </head>
 <body>
-
 <header>
 <div class="logo">ROBUX STORE</div>
 <nav>
 <button class="secondary" onclick="show('store')">المتجر</button>
+<button class="secondary" onclick="show('cart')">السلة <span id="cartCount" class="cart-count">0</span></button>
 <button class="secondary" onclick="show('account')">حسابي</button>
 <button class="secondary" onclick="show('admin')">الإدارة</button>
 </nav>
 </header>
-
 <main>
 <section id="store" class="section active">
 <div class="hero">
@@ -71,7 +80,40 @@ footer{text-align:center;color:#777;padding:30px}
 </div>
 <div class="grid" id="products"><p>جاري التحميل...</p></div>
 </section>
-
+<section id="cart" class="section">
+<h2>سلة المشتريات</h2>
+<div id="cartItems"></div>
+<div class="card" style="margin-top:18px">
+<div class="total" id="cartTotal">الإجمالي: 0</div>
+<p class="muted">الأسعار بعملة المتجر الافتراضية.</p>
+<button class="primary" style="width:100%" onclick="showPayment()">إتمام الطلب والدفع</button>
+<button class="secondary" style="width:100%;margin-top:10px" onclick="show('store')">متابعة التسوق</button>
+</div>
+</section>
+<section id="checkout" class="section">
+<h2>إتمام الطلب</h2>
+<div class="card">
+<h3>ملخص الطلب</h3>
+<div id="checkoutSummary"></div>
+<div class="total" id="checkoutTotal"></div>
+</div>
+<h3 style="margin-top:25px">اختر طريقة الدفع</h3>
+<div class="payment-option">
+<h3>التحويل</h3>
+<p class="muted">حساب Roblox المستلم:</p>
+<div class="code">Ahmad_roblox2222</div>
+<button class="secondary" style="width:100%" onclick="copyAccount()">نسخ اسم الحساب</button>
+<div class="notice">
+بعد إتمام الدفع عبر وسيلة Roblox المتاحة، احتفظ بإثبات العملية وتواصل مع إدارة المتجر لتأكيد الطلب.
+</div>
+</div>
+<div class="payment-option">
+<h3>Game Pass</h3>
+<p>اضغط الزر للانتقال إلى صفحة Karen وإكمال عملية الشراء هناك.</p>
+<button class="primary" style="width:100%" onclick="openGamePass()">الانتقال إلى Game Pass</button>
+</div>
+<button class="secondary" style="width:100%;margin-top:15px" onclick="show('cart')">العودة للسلة</button>
+</section>
 <section id="account" class="section">
 <div class="card">
 <h2>تسجيل حساب Roblox</h2>
@@ -83,32 +125,16 @@ footer{text-align:center;color:#777;padding:30px}
 <div class="code" id="verificationCode"></div>
 <button class="secondary" onclick="copyCode()">نسخ الكود</button>
 <h3>طريقة وضع الكود في Bio</h3>
-<div class="tutorial">
-<b>1 — افتح Roblox</b>
-<p>سجّل دخولك في تطبيق Roblox أو الموقع الرسمي.</p>
-</div>
-<div class="tutorial">
-<b>2 — افتح ملفك الشخصي</b>
-<p>اضغط على Profile من القائمة.</p>
-</div>
-<div class="tutorial">
-<b>3 — عدّل الوصف</b>
-<p>اضغط Edit Profile ثم ابحث عن خانة About.</p>
-</div>
-<div class="tutorial">
-<b>4 — ضع كود التحقق</b>
-<p>انسخ الكود والصقه في About ثم احفظ التغييرات.</p>
-</div>
-<div class="tutorial">
-<b>5 — ارجع للمتجر</b>
-<p>اضغط زر التحقق بعد حفظ الوصف.</p>
-</div>
+<div class="tutorial"><b>1 — افتح Roblox</b><p>سجّل دخولك في تطبيق Roblox أو الموقع الرسمي.</p></div>
+<div class="tutorial"><b>2 — افتح ملفك الشخصي</b><p>اضغط على Profile من القائمة.</p></div>
+<div class="tutorial"><b>3 — عدّل الوصف</b><p>اضغط Edit Profile ثم ابحث عن خانة About.</p></div>
+<div class="tutorial"><b>4 — ضع كود التحقق</b><p>انسخ الكود والصقه في About ثم احفظ التغييرات.</p></div>
+<div class="tutorial"><b>5 — ارجع للمتجر</b><p>اضغط زر التحقق بعد حفظ الوصف.</p></div>
 <button class="primary" onclick="verifyCode()">تحقق من الحساب</button>
 <p id="verifyMessage" class="muted"></p>
 </div>
 </div>
 </section>
-
 <section id="admin" class="section">
 <h2>لوحة الإدارة</h2>
 <div class="grid" style="margin-bottom:20px">
@@ -116,7 +142,6 @@ footer{text-align:center;color:#777;padding:30px}
 <div class="card"><div class="stat" id="pendingOrders">--</div><div class="muted">طلبات معلقة</div></div>
 <div class="card"><div class="stat" id="totalProducts">--</div><div class="muted">المنتجات</div></div>
 </div>
-
 <div class="card">
 <h3>إضافة منتج</h3>
 <label>اسم المنتج</label>
@@ -131,10 +156,8 @@ footer{text-align:center;color:#777;padding:30px}
 <input id="newStock" type="number" min="0" placeholder="المخزون">
 <button class="primary" onclick="addProduct()">إضافة المنتج</button>
 </div>
-
 <h3>إدارة المنتجات</h3>
 <div class="grid" id="adminProducts"></div>
-
 <h3>طلبات المشترين</h3>
 <div class="card table-wrap">
 <table>
@@ -144,34 +167,31 @@ footer{text-align:center;color:#777;padding:30px}
 </div>
 </section>
 </main>
-
 <footer>ROBUX STORE © 2026</footer>
-
 <script>
 const SUPABASE_URL="https://jwikjdbqlzucmkihmyci.supabase.co";
 const SUPABASE_KEY="sb_publishable_RWwEfQJdI0GHddFsqCSYRQ_KGPGqRYR";
+const GAMEPASS_URL="https://www.roblox.com/games/17328558726/Karen#!/store";
+const PAYMENT_ACCOUNT="Ahmad_roblox2222";
 const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
-
 let currentCode="";
 let currentUsername="";
-
+let cart=[];
 function show(id){
 document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
 document.getElementById(id).classList.add('active');
 if(id==='store')loadProducts();
 if(id==='account')loadBalance();
 if(id==='admin')loadAdmin();
+if(id==='cart')renderCart();
 }
-
 function safe(v){
 return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
-
 async function getUser(){
 const {data:{user}}=await db.auth.getUser();
 return user;
 }
-
 async function loadProducts(){
 const box=document.getElementById('products');
 const {data,error}=await db.from('products')
@@ -185,29 +205,119 @@ box.innerHTML=data.map(p=>`
 <p class="muted">${safe(p.description)}</p>
 <div class="price">${p.price} Robux افتراضي</div>
 <p class="muted">المتوفر: ${p.stock}</p>
-<button class="primary" style="width:100%" ${p.stock<1?'disabled':''} onclick="buy('${p.id}')">شراء</button>
+<button class="primary" style="width:100%" ${p.stock<1?'disabled':''} onclick="addToCart('${p.id}')">إضافة للسلة</button>
 </div>`).join('');
 }
-
+function addToCart(id){
+const cardData=window.productCache?.find(p=>String(p.id)===String(id));
+if(!cardData){
+loadProductsWithCache().then(()=>addToCart(id));
+return;
+}
+const existing=cart.find(item=>String(item.id)===String(id));
+const currentQty=existing?.quantity||0;
+if(currentQty+1>Number(cardData.stock)){
+alert('الكمية المطلوبة غير متوفرة.');
+return;
+}
+if(existing)existing.quantity++;
+else cart.push({
+id:cardData.id,
+name:cardData.name,
+price:Number(cardData.price),
+stock:Number(cardData.stock),
+quantity:1
+});
+updateCartCount();
+alert('تمت إضافة المنتج إلى السلة!');
+}
+async function loadProductsWithCache(){
+const {data,error}=await db.from('products')
+.select('*').eq('is_active',true);
+if(error){alert('تعذر تحميل المنتجات');return;}
+window.productCache=data||[];
+}
+async function loadProducts(){
+const box=document.getElementById('products');
+const {data,error}=await db.from('products')
+.select('*').eq('is_active',true).order('created_at',{ascending:false});
+if(error){box.innerHTML='<p>تعذر تحميل المنتجات.</p>';return;}
+window.productCache=data||[];
+if(!data.length){box.innerHTML='<p>لا توجد منتجات حاليًا.</p>';return;}
+box.innerHTML=data.map(p=>`
+<div class="card">
+<img src="${safe(p.image_url||'https://placehold.co/400x250/25262b/ffffff?text=Robux+Store')}" alt="">
+<h3>${safe(p.name)}</h3>
+<p class="muted">${safe(p.description)}</p>
+<div class="price">${p.price} Robux افتراضي</div>
+<p class="muted">المتوفر: ${p.stock}</p>
+<button class="primary" style="width:100%" ${p.stock<1?'disabled':''} onclick="addToCart('${p.id}')">إضافة للسلة</button>
+</div>`).join('');
+}
+function updateCartCount(){
+const count=cart.reduce((sum,item)=>sum+item.quantity,0);
+document.getElementById('cartCount').textContent=count;
+}
+function renderCart(){
+const box=document.getElementById('cartItems');
+if(!cart.length){
+box.innerHTML='<div class="card"><p>السلة فارغة حاليًا.</p><button class="primary" onclick="show(\'store\')">تصفح المنتجات</button></div>';
+document.getElementById('cartTotal').textContent='الإجمالي: 0';
+updateCartCount();
+return;
+}
+box.innerHTML=cart.map(item=>`
+<div class="card" style="margin-bottom:12px">
+<h3>${safe(item.name)}</h3>
+<p class="price">${item.price} لكل قطعة</p>
+<div class="quantity-controls">
+<button class="secondary" onclick="changeQuantity('${item.id}',-1)">−</button>
+<b>${item.quantity}</b>
+<button class="secondary" onclick="changeQuantity('${item.id}',1)">+</button>
+<button class="danger" onclick="removeFromCart('${item.id}')">حذف</button>
+</div>
+<div class="muted">المجموع: ${item.price*item.quantity}</div>
+</div>`).join('');
+const total=cart.reduce((sum,item)=>sum+item.price*item.quantity,0);
+document.getElementById('cartTotal').textContent='الإجمالي: '+total;
+updateCartCount();
+}
+function changeQuantity(id,change){
+const item=cart.find(x=>String(x.id)===String(id));
+if(!item)return;
+const next=item.quantity+change;
+if(next<1)return;
+if(next>item.stock){alert('تجاوزت الكمية المتوفرة.');return;}
+item.quantity=next;
+renderCart();
+}
+function removeFromCart(id){
+cart=cart.filter(x=>String(x.id)!==String(id));
+renderCart();
+}
+function showPayment(){
+if(!cart.length){alert('السلة فارغة.');return;}
+const total=cart.reduce((sum,item)=>sum+item.price*item.quantity,0);
+document.getElementById('checkoutSummary').innerHTML=cart.map(item=>
+`<p>${safe(item.name)} × ${item.quantity} — ${item.price*item.quantity}</p>`
+).join('');
+document.getElementById('checkoutTotal').textContent='الإجمالي: '+total;
+show('checkout');
+}
+function copyAccount(){
+navigator.clipboard.writeText(PAYMENT_ACCOUNT)
+.then(()=>alert('تم نسخ اسم الحساب.'))
+.catch(()=>alert('اسم الحساب: '+PAYMENT_ACCOUNT));
+}
+function openGamePass(){
+window.open(GAMEPASS_URL,'_blank','noopener,noreferrer');
+}
 async function loadBalance(){
 const user=await getUser();
 if(!user){document.getElementById('balance').textContent='سجل الدخول أولًا';return;}
 const {data}=await db.from('wallets').select('balance').eq('user_id',user.id).maybeSingle();
 document.getElementById('balance').textContent='الرصيد: '+(data?.balance??0)+' Robux افتراضي';
 }
-
-async function buy(id){
-const user=await getUser();
-if(!user){alert('يلزم تسجيل الدخول أولًا.');show('account');return;}
-const q=Number(prompt('أدخل الكمية','1'));
-if(!Number.isInteger(q)||q<1)return;
-const {error}=await db.rpc('purchase_product',{p_product_id:id,p_quantity:q});
-if(error){alert(error.message);return;}
-alert('تم إنشاء الطلب!');
-loadProducts();
-loadBalance();
-}
-
 async function startVerification(){
 const name=document.getElementById('robloxName').value.trim();
 if(!name){alert('اكتب اسم Roblox');return;}
@@ -218,18 +328,15 @@ document.getElementById('verifyMessage').textContent=
 'لم يتم إنشاء كود بعد. يلزم إعداد خدمة التحقق الآمنة على الخادم.';
 document.getElementById('verifyArea').classList.remove('hidden');
 }
-
 function copyCode(){
 if(!currentCode)return alert('خدمة التحقق غير مفعلة بعد.');
 navigator.clipboard.writeText(currentCode);
 alert('تم النسخ');
 }
-
 async function verifyCode(){
 document.getElementById('verifyMessage').textContent=
 'التحقق غير مفعّل حتى يتم نشر خدمة الخادم التي تفحص وصف Roblox.';
 }
-
 async function addProduct(){
 const name=document.getElementById('newName').value.trim();
 const description=document.getElementById('newDescription').value.trim();
@@ -246,13 +353,11 @@ if(error){alert(error.message);return;}
 alert('تمت إضافة المنتج');
 loadAdmin();
 }
-
 async function loadAdmin(){
 const user=await getUser();
 if(!user){document.getElementById('orders').innerHTML='<tr><td colspan="6">يلزم تسجيل دخول مخوّل للإدارة.</td></tr>';return;}
 const {data:admin}=await db.from('admin_users').select('user_id').eq('user_id',user.id).maybeSingle();
 if(!admin){document.getElementById('orders').innerHTML='<tr><td colspan="6">هذا الحساب ليس Admin.</td></tr>';return;}
-
 const [{data:orders},{data:products}] = await Promise.all([
 db.from('orders').select('*').order('created_at',{ascending:false}),
 db.from('products').select('*').order('created_at',{ascending:false})
@@ -260,7 +365,6 @@ db.from('products').select('*').order('created_at',{ascending:false})
 document.getElementById('totalOrders').textContent=orders?.length||0;
 document.getElementById('pendingOrders').textContent=orders?.filter(o=>o.status==='pending').length||0;
 document.getElementById('totalProducts').textContent=products?.length||0;
-
 document.getElementById('adminProducts').innerHTML=(products||[]).map(p=>`
 <div class="card">
 <b>${safe(p.name)}</b>
@@ -268,7 +372,6 @@ document.getElementById('adminProducts').innerHTML=(products||[]).map(p=>`
 <button class="secondary" onclick="editProduct('${p.id}',${p.price},${p.stock})">تعديل السعر والكمية</button>
 <button class="danger" onclick="removeProduct('${p.id}')">إزالة</button>
 </div>`).join('');
-
 const ids=[...new Set((orders||[]).map(o=>o.user_id))];
 let profiles={};
 if(ids.length){
@@ -287,7 +390,6 @@ return `<tr>
 </tr>`;
 }).join('')||'<tr><td colspan="6">لا توجد طلبات</td></tr>';
 }
-
 async function editProduct(id,oldPrice,oldStock){
 const price=Number(prompt('السعر الجديد',oldPrice));
 if(!Number.isFinite(price)||price<0)return;
@@ -297,14 +399,12 @@ const {error}=await db.from('products').update({price,stock}).eq('id',id);
 if(error){alert(error.message);return;}
 loadAdmin();
 }
-
 async function removeProduct(id){
 if(!confirm('هل تريد إزالة المنتج؟'))return;
 const {error}=await db.from('products').update({is_active:false}).eq('id',id);
 if(error){alert(error.message);return;}
 loadAdmin();
 }
-
 async function setOrder(id,status){
 if(!confirm('تأكيد تسليم الطلب؟'))return;
 const {error}=await db.rpc('admin_set_order_status',{p_order_id:id,p_status:status,p_reason:null});
@@ -312,7 +412,6 @@ if(error){alert(error.message);return;}
 alert('تم تحديث الطلب');
 loadAdmin();
 }
-
 async function rejectOrder(id){
 const reason=prompt('سبب رفض الطلب');
 if(reason===null)return;
@@ -321,7 +420,6 @@ if(error){alert(error.message);return;}
 alert('تم رفض الطلب وإرجاع الرصيد');
 loadAdmin();
 }
-
 loadProducts();
 </script>
 </body>
