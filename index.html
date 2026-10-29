@@ -40,7 +40,7 @@ label{font-size:13px;color:#c0c6ad}
 footer{text-align:center;padding:30px;color:#838a76;border-top:1px solid #292e24}
 .hidden{display:none!important}
 .cart-count{background:#a3a785;color:#171912;border-radius:20px;padding:2px 8px}
-.quantity{display:flex;gap:10px;align-items:center;margin-top:10px}
+.quantity{display:flex;gap:10px;align-items:center;margin-top:10px;flex-wrap:wrap}
 .quantity button{padding:5px 13px}
 .total{font-size:23px;color:#c0c79e;font-weight:900}
 .notice{padding:13px;background:#282d20;border:1px solid #4b5538;border-radius:12px;color:#d8ddc8;margin:12px 0}
@@ -48,6 +48,7 @@ footer{text-align:center;padding:30px;color:#838a76;border-top:1px solid #292e24
 </style>
 </head>
 <body>
+
 <header>
  <div class="logo">KAREN STORE</div>
  <nav>
@@ -59,6 +60,7 @@ footer{text-align:center;padding:30px;color:#838a76;border-top:1px solid #292e24
 </header>
 
 <main>
+
 <section id="store" class="section active">
  <div class="hero">
   <div class="eyebrow">WELCOME TO KAREN</div>
@@ -66,10 +68,12 @@ footer{text-align:center;padding:30px;color:#838a76;border-top:1px solid #292e24
   <p>اكتشف مجموعتنا، اختر ما يناسبك، وتابع طلبك من مكان واحد. تجربة تسوق مختلفة تبدأ من هنا.</p>
   <button class="primary" onclick="document.getElementById('products').scrollIntoView({behavior:'smooth'})">اكتشف المنتجات</button>
  </div>
+
  <div class="row" style="justify-content:space-between;margin:30px 0 18px">
   <div><div class="eyebrow">OUR COLLECTION</div><h2>اكتشف المنتجات</h2></div>
   <div class="price" id="balance">الرصيد: --</div>
  </div>
+
  <div class="grid" id="products">جاري تحميل المنتجات...</div>
 </section>
 
@@ -79,7 +83,7 @@ footer{text-align:center;padding:30px;color:#838a76;border-top:1px solid #292e24
  <div class="card">
   <div class="total" id="cartTotal">الإجمالي: 0</div>
   <p class="muted">الرصيد المستخدم عملة افتراضية داخل المتجر، وليس Robux حقيقية.</p>
-  <button class="primary" style="width:100%" onclick="checkout()">تأكيد الشراء</button>
+  <button class="primary" style="width:100%" id="checkoutButton" onclick="checkout()">تأكيد الشراء</button>
   <button class="secondary" style="width:100%;margin-top:8px" onclick="show('store')">متابعة التسوق</button>
  </div>
 </section>
@@ -89,8 +93,8 @@ footer{text-align:center;padding:30px;color:#838a76;border-top:1px solid #292e24
   <div class="eyebrow">YOUR ACCOUNT</div>
   <h2>حسابك في KAREN STORE</h2>
   <div id="accountInfo" class="muted">جاري التحقق...</div>
-  <button class="primary" style="width:100%" onclick="location.href='register.html'">تسجيل الدخول / إنشاء حساب</button>
-  <button class="secondary" style="width:100%" onclick="logout()">تسجيل الخروج</button>
+  <button class="primary" id="loginButton" style="width:100%" onclick="location.href='register.html'">تسجيل الدخول / إنشاء حساب</button>
+  <button class="secondary hidden" id="logoutButton" style="width:100%" onclick="logout()">تسجيل الخروج</button>
  </div>
 </section>
 
@@ -98,135 +102,356 @@ footer{text-align:center;padding:30px;color:#838a76;border-top:1px solid #292e24
  <h2>طلباتي</h2>
  <div id="myOrders"></div>
 </section>
+
 </main>
 
 <footer>
  <div class="logo">KAREN STORE</div>
-<p>YOUR EXPERIENCE. YOUR STORE.</p>
-<small>© 2026 KAREN STORE</small>
+ <p>YOUR EXPERIENCE. YOUR STORE.</p>
+ <small>© 2026 KAREN STORE</small>
 </footer>
 
 <script>
 const SUPABASE_URL="https://jwikjdbqlzucmkihmyci.supabase.co";
-const SUPABASE_KEY="sb_publishable_RWwEfQJdI0GHddFsqCSYRQ_KPGqRYR";
+const SUPABASE_KEY="sb_publishable_RWwEfQJdI0GHddFsqCSYR_KPGqRYR";
 const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+
 let cart=[];
 let products=[];
+let checkoutRunning=false;
 
 const $=id=>document.getElementById(id);
-const safe=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 
-async function user(){const {data:{user}}=await db.auth.getUser();return user}
+const safe=v=>String(v??"").replace(/[&<>"']/g,c=>({
+ "&":"&amp;",
+ "<":"&lt;",
+ ">":"&gt;",
+ '"':"&quot;",
+ "'":"&#39;"
+}[c]));
+
+async function user(){
+ const {data:{user},error}=await db.auth.getUser();
+ if(error)return null;
+ return user;
+}
 
 async function show(id){
  document.querySelectorAll(".section").forEach(x=>x.classList.remove("active"));
  $(id).classList.add("active");
- if(id==="store")loadProducts();
+
+ if(id==="store")await loadProducts();
  if(id==="cart")renderCart();
- if(id==="account")loadAccount();
- if(id==="ordersSection")loadMyOrders();
+ if(id==="account")await loadAccount();
+ if(id==="ordersSection")await loadMyOrders();
 }
 
 async function loadProducts(){
  const box=$("products");
- const {data,error}=await db.from("products").select("*").eq("is_active",true).order("created_at",{ascending:false});
- if(error){box.textContent="تعذر تحميل المنتجات.";return}
+ box.textContent="جاري تحميل المنتجات...";
+
+ const {data,error}=await db
+  .from("products")
+  .select("*")
+  .eq("is_active",true)
+  .order("created_at",{ascending:false});
+
+ if(error){
+  box.textContent="تعذر تحميل المنتجات.";
+  return;
+ }
+
  products=data||[];
- if(!products.length){box.innerHTML="<p class='muted'>لا توجد منتجات متاحة حاليًا.</p>";return}
+
+ if(!products.length){
+  box.innerHTML="<p class='muted'>لا توجد منتجات متاحة حاليًا.</p>";
+  return;
+ }
+
  box.innerHTML=products.map(p=>`
- <article class="card">
-  <img src="${safe(p.image_url||"https://placehold.co/500x300/252d1c/c0c79e?text=KAREN+STORE")}" alt="">
-  <span class="badge">KAREN COLLECTION</span>
-  <h3>${safe(p.name)}</h3>
-  <p class="muted">${safe(p.description)}</p>
-  <div class="price">${Number(p.price)} نقطة</div>
-  <p class="muted">المتوفر: ${Number(p.stock)}</p>
-  <button class="primary" style="width:100%" ${p.stock<1?"disabled":""} onclick="addCart('${p.id}')">أضف إلى السلة</button>
- </article>`).join("");
+  <article class="card">
+   <img
+    src="${safe(p.image_url||"https://placehold.co/500x300/252d1c/c0c79e?text=KAREN+STORE")}"
+    alt="${safe(p.name)}"
+    onerror="this.src='https://placehold.co/500x300/252d1c/c0c79e?text=KAREN+STORE'">
+   <span class="badge">KAREN COLLECTION</span>
+   <h3>${safe(p.name)}</h3>
+   <p class="muted">${safe(p.description)}</p>
+   <div class="price">${Number(p.price)} نقطة</div>
+   <p class="muted">المتوفر: ${Number(p.stock)}</p>
+   <button class="primary" style="width:100%"
+    ${Number(p.stock)<1?"disabled":""}
+    onclick="addCart('${p.id}')">
+    أضف إلى السلة
+   </button>
+  </article>
+ `).join("");
+
+ await loadBalance();
 }
 
 function addCart(id){
  const p=products.find(x=>String(x.id)===String(id));
  if(!p)return;
+
  const old=cart.find(x=>String(x.id)===String(id));
- if((old?.quantity||0)+1>Number(p.stock)){alert("الكمية غير متوفرة.");return}
+
+ if((old?.quantity||0)+1>Number(p.stock)){
+  alert("الكمية غير متوفرة.");
+  return;
+ }
+
  if(old)old.quantity++;
- else cart.push({id:p.id,name:p.name,price:Number(p.price),stock:Number(p.stock),quantity:1});
+ else cart.push({
+  id:p.id,
+  name:p.name,
+  price:Number(p.price),
+  stock:Number(p.stock),
+  quantity:1
+ });
+
  renderCart();
- alert("تمت إضافة المنتج إلى السلة.");
 }
 
 function renderCart(){
  $("cartCount").textContent=cart.reduce((n,x)=>n+x.quantity,0);
- if(!cart.length){$("cartItems").innerHTML="<div class='card'>سلتك فارغة حاليًا.</div>";$("cartTotal").textContent="الإجمالي: 0";return}
+
+ if(!cart.length){
+  $("cartItems").innerHTML="<div class='card'>سلتك فارغة حاليًا.</div>";
+  $("cartTotal").textContent="الإجمالي: 0";
+  return;
+ }
+
  $("cartItems").innerHTML=cart.map(x=>`
- <div class="card" style="margin-bottom:12px">
- <b>${safe(x.name)}</b><p class="price">${x.price} نقطة للقطعة</p>
- <div class="quantity">
- <button class="secondary" onclick="changeQty('${x.id}',-1)">−</button>
- <b>${x.quantity}</b>
- <button class="secondary" onclick="changeQty('${x.id}',1)">+</button>
- <button class="danger" onclick="removeCart('${x.id}')">إزالة</button>
- </div>
- <p class="muted">المجموع: ${x.price*x.quantity}</p></div>`).join("");
- $("cartTotal").textContent="الإجمالي: "+cart.reduce((n,x)=>n+x.price*x.quantity,0);
+  <div class="card" style="margin-bottom:12px">
+   <b>${safe(x.name)}</b>
+   <p class="price">${x.price} نقطة للقطعة</p>
+   <div class="quantity">
+    <button class="secondary" onclick="changeQty('${x.id}',-1)">−</button>
+    <b>${x.quantity}</b>
+    <button class="secondary" onclick="changeQty('${x.id}',1)">+</button>
+    <button class="danger" onclick="removeCart('${x.id}')">إزالة</button>
+   </div>
+   <p class="muted">المجموع: ${x.price*x.quantity}</p>
+  </div>
+ `).join("");
+
+ $("cartTotal").textContent="الإجمالي: "+
+  cart.reduce((n,x)=>n+x.price*x.quantity,0);
 }
 
 function changeQty(id,d){
- const x=cart.find(x=>String(x.id)===String(id));if(!x)return;
+ const x=cart.find(x=>String(x.id)===String(id));
+ if(!x)return;
+
  if(x.quantity+d<1||x.quantity+d>x.stock)return;
- x.quantity+=d;renderCart();
+
+ x.quantity+=d;
+ renderCart();
 }
-function removeCart(id){cart=cart.filter(x=>String(x.id)!==String(id));renderCart()}
+
+function removeCart(id){
+ cart=cart.filter(x=>String(x.id)!==String(id));
+ renderCart();
+}
 
 async function checkout(){
+ if(checkoutRunning)return;
+
  const u=await user();
- if(!u){alert("سجّل الدخول أولًا لإتمام الشراء.");location.href="register.html";return}
- const {data:profile}=await db.from("profiles").select("roblox_username").eq("id",u.id).maybeSingle();
- if(!profile?.roblox_username){alert("أضف اسم Roblox من صفحة حسابك أولًا.");location.href="register.html";return}
- if(!cart.length){alert("السلة فارغة.");return}
- if(!confirm("تأكيد شراء المنتجات من رصيدك الافتراضي؟"))return;
- for(const item of cart){
-  const {error}=await db.rpc("purchase_product",{p_product_id:item.id,p_quantity:item.quantity});
-  if(error){alert("تعذر إتمام الطلب: "+error.message);return}
+
+ if(!u){
+  alert("سجّل الدخول أولًا لإتمام الشراء.");
+  location.href="register.html";
+  return;
  }
- cart=[];renderCart();await loadProducts();await loadBalance();
- alert("تم إرسال طلبك بنجاح.");
- show("ordersSection");
+
+ if(!cart.length){
+  alert("السلة فارغة.");
+  return;
+ }
+
+ const {data:profile,error:profileError}=await db
+  .from("profiles")
+  .select("roblox_username")
+  .eq("id",u.id)
+  .maybeSingle();
+
+ if(profileError){
+  alert("تعذر التحقق من حسابك: "+profileError.message);
+  return;
+ }
+
+ if(!profile?.roblox_username){
+  alert("أضف اسم Roblox من صفحة التسجيل أولًا.");
+  location.href="register.html";
+  return;
+ }
+
+ if(!confirm("تأكيد شراء المنتجات من رصيدك الافتراضي؟"))return;
+
+ checkoutRunning=true;
+ $("checkoutButton").disabled=true;
+ $("checkoutButton").textContent="جاري تنفيذ الطلب...";
+
+ try{
+  const completed=[];
+
+  for(const item of [...cart]){
+   const {error}=await db.rpc("purchase_product",{
+    p_product_id:item.id,
+    p_quantity:item.quantity
+   });
+
+   if(error){
+    alert(
+     completed.length
+      ?"تم تنفيذ بعض الطلبات قبل حدوث الخطأ. تحقق من صفحة طلباتي."
+      :"تعذر إتمام الطلب: "+error.message
+    );
+    break;
+   }
+
+   completed.push(item.id);
+  }
+
+  if(completed.length){
+   cart=cart.filter(x=>!completed.includes(x.id));
+   renderCart();
+   await loadProducts();
+   await loadBalance();
+   await loadMyOrders();
+
+   alert("تم إرسال الطلب بنجاح.");
+   await show("ordersSection");
+  }
+
+ }catch(error){
+  alert("حدث خطأ: "+error.message);
+ }finally{
+  checkoutRunning=false;
+  $("checkoutButton").disabled=false;
+  $("checkoutButton").textContent="تأكيد الشراء";
+ }
 }
 
 async function loadBalance(){
  const u=await user();
- if(!u){$("balance").textContent="سجّل الدخول";return}
- const {data}=await db.from("wallets").select("balance").eq("user_id",u.id).maybeSingle();
- $("balance").textContent="رصيدك: "+(data?.balance??0)+" نقطة";
+
+ if(!u){
+  $("balance").textContent="سجّل الدخول";
+  return;
+ }
+
+ const {data,error}=await db
+  .from("wallets")
+  .select("balance")
+  .eq("user_id",u.id)
+  .maybeSingle();
+
+ $("balance").textContent=error
+  ?"تعذر تحميل الرصيد"
+  :"رصيدك: "+(data?.balance??0)+" نقطة";
 }
 
 async function loadAccount(){
  const u=await user();
- if(!u){$("accountInfo").innerHTML="أنت غير مسجل الدخول.";return}
- const [{data:p},{data:w}]=await Promise.all([
- db.from("profiles").select("roblox_username").eq("id",u.id).maybeSingle(),
- db.from("wallets").select("balance").eq("user_id",u.id).maybeSingle()
+
+ $("loginButton").classList.toggle("hidden",!!u);
+ $("logoutButton").classList.toggle("hidden",!u);
+ $("adminButton").classList.add("hidden");
+
+ if(!u){
+  $("accountInfo").textContent="أنت غير مسجل الدخول.";
+  $("balance").textContent="سجّل الدخول";
+  return;
+ }
+
+ const [{data:p,error:profileError},{data:w,error:walletError}]=await Promise.all([
+  db.from("profiles")
+   .select("roblox_username")
+   .eq("id",u.id)
+   .maybeSingle(),
+
+  db.from("wallets")
+   .select("balance")
+   .eq("user_id",u.id)
+   .maybeSingle()
  ]);
- const {data:admin}=await db.from("admin_users").select("user_id").eq("user_id",u.id).maybeSingle();
- $("accountInfo").innerHTML=`البريد: ${safe(u.email)}<br>اسم Roblox: ${safe(p?.roblox_username||"لم تضفه بعد")}<br>الرصيد: ${w?.balance??0} نقطة<br><br><button class="secondary" onclick="show('ordersSection')">عرض طلباتي</button>${admin?'<p class="price">OWNER ACCESS</p>':""}`;
+
+ if(profileError||walletError){
+  $("accountInfo").textContent="تعذر تحميل بيانات الحساب.";
+  return;
+ }
+
+ const {data:admin}=await db
+  .from("admin_users")
+  .select("user_id")
+  .eq("user_id",u.id)
+  .maybeSingle();
+
+ $("accountInfo").innerHTML=`
+  اسم Roblox: ${safe(p?.roblox_username||"لم تضفه بعد")}
+  <br>
+  الرصيد: ${Number(w?.balance??0)} نقطة
+  <br><br>
+  <button class="secondary" onclick="show('ordersSection')">عرض طلباتي</button>
+  ${admin?'<p class="price">OWNER ACCESS</p>':""}
+ `;
+
  $("adminButton").classList.toggle("hidden",!admin);
  await loadBalance();
 }
 
 async function loadMyOrders(){
- const u=await user();if(!u){$("myOrders").textContent="سجّل الدخول أولًا.";return}
- const {data,error}=await db.from("orders").select("*").eq("user_id",u.id).order("created_at",{ascending:false});
- if(error){$("myOrders").textContent=error.message;return}
- $("myOrders").innerHTML=(data||[]).map(o=>`<div class="card"><b>${safe(o.product_name)}</b><p>${o.quantity} × ${o.unit_price} = ${o.total_price} نقطة</p><span class="badge">${safe(o.status)}</span>${o.rejection_reason?`<p class="muted">${safe(o.rejection_reason)}</p>`:""}</div>`).join("")||"لا توجد طلبات.";
+ const u=await user();
+
+ if(!u){
+  $("myOrders").textContent="سجّل الدخول أولًا.";
+  return;
+ }
+
+ $("myOrders").textContent="جاري تحميل الطلبات...";
+
+ const {data,error}=await db
+  .from("orders")
+  .select("*")
+  .eq("user_id",u.id)
+  .order("created_at",{ascending:false});
+
+ if(error){
+  $("myOrders").textContent="تعذر تحميل الطلبات: "+error.message;
+  return;
+ }
+
+ $("myOrders").innerHTML=(data||[]).map(o=>`
+  <div class="card">
+   <b>${safe(o.product_name)}</b>
+   <p>${Number(o.quantity)} × ${Number(o.unit_price)} = ${Number(o.total_price)} نقطة</p>
+   <span class="badge">${safe(o.status)}</span>
+   ${o.rejection_reason
+    ?`<p class="muted">${safe(o.rejection_reason)}</p>`
+    :""}
+  </div>
+ `).join("")||"لا توجد طلبات.";
 }
 
-async function logout(){await db.auth.signOut();location.reload()}
+async function logout(){
+ await db.auth.signOut();
+ cart=[];
+ location.reload();
+}
 
-db.auth.onAuthStateChange(()=>{loadAccount();loadProducts()});
+db.auth.onAuthStateChange(()=>{
+ setTimeout(()=>{
+  loadAccount();
+  loadProducts();
+ },0);
+});
+
 loadProducts();
 loadAccount();
+renderCart();
 </script>
 </body>
 </html>
