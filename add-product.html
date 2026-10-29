@@ -1,0 +1,71 @@
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>KAREN STORE | Add Product</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#11130f;color:#eee;font-family:Cairo,sans-serif;padding:20px}
+main{max-width:600px;margin:35px auto}
+.logo{font-size:25px;color:#c0c79e;font-weight:900}
+.panel{background:#1b1f18;border:1px solid #343b2c;border-radius:17px;padding:23px;margin-top:20px}
+h1{font-size:23px}
+label{font-size:13px;color:#c0c79e}
+input,textarea{width:100%;padding:13px;background:#11140f;color:white;border:1px solid #414735;border-radius:9px;margin:7px 0 15px;font-family:inherit}
+button{width:100%;padding:13px;border:0;border-radius:10px;font-family:inherit;font-weight:900;cursor:pointer;margin-top:9px}
+.primary{background:#a3a785;color:#171912}
+.secondary{background:#30372a;color:white}
+.msg{color:#c0c79e;font-size:13px}
+</style>
+</head>
+<body>
+<main>
+<div class="logo">KAREN STORE</div>
+<div class="panel">
+<h1>إضافة منتج جديد</h1>
+<p style="color:#a5ad95">أضف منتجك إلى مجموعة KAREN STORE.</p>
+<label>اسم المنتج</label>
+<input id="name" placeholder="اسم المنتج">
+<label>وصف المنتج</label>
+<textarea id="description" rows="4" placeholder="اكتب وصفًا مختصرًا"></textarea>
+<label>رابط صورة المنتج</label>
+<input id="image" type="url" placeholder="https://...">
+<label>السعر بالنقاط الافتراضية</label>
+<input id="price" type="number" min="0" placeholder="السعر">
+<label>كمية المخزون</label>
+<input id="stock" type="number" min="0" placeholder="الكمية">
+<button class="primary" onclick="add()">نشر المنتج</button>
+<button class="secondary" onclick="location.href='admin.html'">العودة إلى الداشبورد</button>
+<p class="msg" id="message"></p>
+</div>
+</main>
+<script>
+const db=window.supabase.createClient(
+ "https://jwikjdbqlzucmkihmyci.supabase.co",
+ "sb_publishable_RWwEfQJdI0GHddFsqCSYR_KPGqRYR"
+);
+async function add(){
+ const {data:{user}}=await db.auth.getUser();
+ if(!user){alert("سجّل الدخول أولًا.");location.href="register.html";return}
+ const {data:admin}=await db.from("admin_users").select("user_id").eq("user_id",user.id).maybeSingle();
+ if(!admin){alert("ليس لديك صلاحية الأونر.");location.href="index.html";return}
+ const name=document.getElementById("name").value.trim();
+ const description=document.getElementById("description").value.trim();
+ const image_url=document.getElementById("image").value.trim();
+ const price=Number(document.getElementById("price").value);
+ const stock=Number(document.getElementById("stock").value);
+ if(!name||!Number.isInteger(price)||price<0||!Number.isInteger(stock)||stock<0){
+  document.getElementById("message").textContent="تأكد من إدخال الاسم والسعر والكمية بشكل صحيح.";return;
+ }
+ const {error}=await db.from("products").insert({name,description,image_url,price,stock,is_active:true});
+ if(error){document.getElementById("message").textContent=error.message;return}
+ document.getElementById("message").textContent="تم نشر المنتج بنجاح.";
+ ["name","description","image","price","stock"].forEach(id=>document.getElementById(id).value="");
+}
+</script>
+</body>
+</html>
