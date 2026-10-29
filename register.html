@@ -4,163 +4,89 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Register | ROBUX STORE</title>
+<title>KAREN STORE | Account</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box}
-body{margin:0;background:#101114;color:#fff;font-family:Cairo,sans-serif;padding:20px}
-.wrap{max-width:480px;margin:35px auto}
-.logo{text-align:center;color:#a3a785;font-size:27px;font-weight:900;margin-bottom:25px}
-.card{background:#191a1f;border:1px solid #303137;border-radius:17px;padding:23px;margin-bottom:18px}
+body{margin:0;background:#11130f;color:#eee;font-family:Cairo,sans-serif;padding:20px}
+.wrap{max-width:470px;margin:35px auto}
+.logo{text-align:center;color:#c0c79e;font-size:30px;font-weight:900;margin-bottom:25px}
+.card{background:#1b1f18;border:1px solid #343b2c;border-radius:17px;padding:23px;margin-bottom:18px}
 h2{margin-top:0}
-p{color:#aaa;font-size:14px;line-height:1.8}
-input{width:100%;padding:13px;margin:8px 0 15px;background:#101114;color:white;border:1px solid #393a40;border-radius:9px;font-family:inherit}
-label{font-size:13px;color:#bbb}
+p{color:#a5ad95;font-size:14px;line-height:1.9}
+label{font-size:13px;color:#c0c79e}
+input{width:100%;padding:13px;margin:8px 0 15px;background:#11140f;color:white;border:1px solid #414735;border-radius:9px;font-family:inherit}
 button{width:100%;padding:13px;border:0;border-radius:10px;font-family:inherit;font-weight:900;cursor:pointer;margin-top:9px}
 .primary{background:#a3a785;color:#171912}
-.secondary{background:#292a30;color:white}
-.tutorial{padding:14px;background:#222329;border-radius:11px;margin:12px 0}
-.tutorial b{color:#a3a785}
-.code{background:#101114;color:#a3a785;text-align:center;padding:18px;border-radius:10px;font-size:23px;font-weight:900;letter-spacing:2px}
-.hidden{display:none}
-.msg{font-size:13px;margin-top:12px;overflow-wrap:anywhere}
-a{color:#a3a785;text-decoration:none}
-.back{text-align:center;margin:20px}
+.secondary{background:#30372a;color:white}
+.msg{font-size:13px;overflow-wrap:anywhere}
+a{color:#c0c79e;text-decoration:none}
 </style>
 </head>
 <body>
 <div class="wrap">
-<div class="logo">ROBUX STORE</div>
-
+<div class="logo">KAREN STORE</div>
 <div class="card">
-<h2>إنشاء حساب</h2>
-<p>أنشئ حسابك الخاص في المتجر.</p>
-
+<h2>مرحبًا بك</h2>
+<p>سجّل الدخول أو أنشئ حسابك للبدء بالتسوق وحفظ طلباتك.</p>
 <label>البريد الإلكتروني</label>
-<input id="email" type="email" placeholder="example@email.com" autocomplete="email">
-
+<input id="email" type="email" autocomplete="email" placeholder="example@email.com">
 <label>كلمة المرور</label>
-<input id="password" type="password" placeholder="كلمة مرور قوية" autocomplete="new-password">
-
+<input id="password" type="password" autocomplete="current-password" placeholder="8 أحرف على الأقل">
 <button class="primary" onclick="register()">إنشاء حساب</button>
 <button class="secondary" onclick="login()">تسجيل الدخول</button>
 <p id="authMessage" class="msg"></p>
 </div>
-
 <div class="card">
-<h2>ربط حساب Roblox</h2>
-<p>بعد تسجيل الدخول، أدخل اسم حساب Roblox الخاص بك.</p>
+<h2>اسم حساب Roblox</h2>
+<p>أدخل اسم حسابك. يجب أن يتكون من 4 أحرف على الأقل.</p>
 <label>Roblox Username</label>
-<input id="roblox" placeholder="اسم حسابك في Roblox">
-
-<button class="primary" onclick="createCode()">إنشاء كود التحقق</button>
-
-<div id="tutorial" class="hidden">
-<h3>كود التحقق الخاص بك</h3>
-<div class="code" id="code"></div>
-<button class="secondary" onclick="copyCode()">نسخ الكود</button>
-
-<h3>طريقة إضافة الكود إلى Bio</h3>
-
-<div class="tutorial">
-<b>الخطوة 1</b>
-<p>افتح تطبيق Roblox أو الموقع الرسمي وسجل الدخول لحسابك.</p>
+<input id="roblox" maxlength="30" placeholder="Ahmad_roblox2222">
+<button class="primary" onclick="saveUsername()">حفظ اسم الحساب</button>
+<p id="robloxMessage" class="msg"></p>
 </div>
-
-<div class="tutorial">
-<b>الخطوة 2</b>
-<p>افتح صفحة Profile الخاصة بك.</p>
+<div style="text-align:center"><a href="index.html">العودة إلى KAREN STORE</a></div>
 </div>
-
-<div class="tutorial">
-<b>الخطوة 3</b>
-<p>اضغط Edit Profile ثم ابحث عن خانة About.</p>
-</div>
-
-<div class="tutorial">
-<b>الخطوة 4</b>
-<p>الصق كود التحقق في الوصف واحفظ التغييرات.</p>
-</div>
-
-<div class="tutorial">
-<b>الخطوة 5</b>
-<p>ارجع إلى المتجر واضغط التحقق بعد تفعيل خدمة التحقق.</p>
-</div>
-
-<button class="primary" onclick="verify()">تحقق من الحساب</button>
-</div>
-<p id="verifyMessage" class="msg"></p>
-</div>
-
-<div class="back"><a href="index.html">العودة إلى المتجر</a></div>
-</div>
-
 <script>
 const SUPABASE_URL="https://jwikjdbqlzucmkihmyci.supabase.co";
-const SUPABASE_KEY="sb_publishable_RWwEfQJdI0GHddFsqCSYRQ_KGPGqRYR";
+const SUPABASE_KEY="sb_publishable_RWwEfQJdI0GHddFsqCSYR_KPGqRYR";
 const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 
-let generatedCode="";
-
 async function register(){
-const email=document.getElementById('email').value.trim();
-const password=document.getElementById('password').value;
-const msg=document.getElementById('authMessage');
-
-if(!email||password.length<8){
-msg.textContent='أدخل بريدًا صحيحًا وكلمة مرور من 8 أحرف على الأقل.';
-return;
-}
-
-const {error}=await db.auth.signUp({email,password});
-msg.textContent=error?error.message:'تم إنشاء الحساب. تحقق من بريدك الإلكتروني إذا طُلب منك ذلك.';
+ const email=document.getElementById("email").value.trim();
+ const password=document.getElementById("password").value;
+ if(!email||password.length<8){document.getElementById("authMessage").textContent="أدخل بريدًا صحيحًا وكلمة مرور من 8 أحرف على الأقل.";return}
+ const {data,error}=await db.auth.signUp({email,password});
+ document.getElementById("authMessage").textContent=error?error.message:"تم إنشاء الحساب. إذا طُلب منك تأكيد البريد، افتح رسالة التأكيد.";
+ if(data.session){document.getElementById("authMessage").textContent="تم إنشاء الحساب وتسجيل الدخول."}
 }
 
 async function login(){
-const email=document.getElementById('email').value.trim();
-const password=document.getElementById('password').value;
-const msg=document.getElementById('authMessage');
-
-const {error}=await db.auth.signInWithPassword({email,password});
-msg.textContent=error?error.message:'تم تسجيل الدخول بنجاح.';
+ const email=document.getElementById("email").value.trim();
+ const password=document.getElementById("password").value;
+ const {error}=await db.auth.signInWithPassword({email,password});
+ document.getElementById("authMessage").textContent=error?error.message:"تم تسجيل الدخول بنجاح.";
+ if(!error)setTimeout(()=>location.href="index.html",700);
 }
 
-async function createCode(){
-const {data:{user}}=await db.auth.getUser();
-if(!user){
-document.getElementById('verifyMessage').textContent='سجل الدخول أولًا.';
-return;
+async function saveUsername(){
+ const {data:{user}}=await db.auth.getUser();
+ if(!user){document.getElementById("robloxMessage").textContent="سجّل الدخول أولًا.";return}
+ const name=document.getElementById("roblox").value.trim();
+ if(name.length<4){document.getElementById("robloxMessage").textContent="الاسم يجب أن يكون 4 أحرف على الأقل.";return}
+ const {error}=await db.rpc("set_my_roblox_username",{p_username:name});
+ document.getElementById("robloxMessage").textContent=error?error.message:"تم حفظ اسم Roblox بنجاح.";
 }
-
-const username=document.getElementById('roblox').value.trim();
-if(!username){
-document.getElementById('verifyMessage').textContent='اكتب اسم Roblox أولًا.';
-return;
+async function init(){
+ const {data:{session}}=await db.auth.getSession();
+ if(session){
+  const {data:p}=await db.from("profiles").select("roblox_username").eq("id",session.user.id).maybeSingle();
+  if(p?.roblox_username)document.getElementById("roblox").value=p.roblox_username;
+  document.getElementById("authMessage").textContent="أنت مسجل الدخول بالفعل.";
+ }
 }
-
-document.getElementById('verifyMessage').textContent=
-'خدمة إنشاء الأكواد وفحص ملكية Roblox لم تُربط بالخادم بعد. لم يتم إنشاء كود صالح للتحقق.';
-}
-
-function copyCode(){
-if(!generatedCode)return;
-navigator.clipboard.writeText(generatedCode);
-alert('تم نسخ الكود');
-}
-
-function verify(){
-document.getElementById('verifyMessage').textContent=
-'التحقق غير متاح حتى يتم إعداد خدمة الخادم الآمنة.';
-}
-
-async function checkSession(){
-const {data:{session}}=await db.auth.getSession();
-if(session){
-document.getElementById('authMessage').textContent='أنت مسجل دخول بالفعل.';
-}
-}
-checkSession();
+init();
 </script>
 </body>
 </html>
