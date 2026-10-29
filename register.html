@@ -4,7 +4,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>KAREN STORE | Account</title>
+<title>KAREN STORE | Roblox Account</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
 <style>
@@ -18,75 +18,156 @@ p{color:#a5ad95;font-size:14px;line-height:1.9}
 label{font-size:13px;color:#c0c79e}
 input{width:100%;padding:13px;margin:8px 0 15px;background:#11140f;color:white;border:1px solid #414735;border-radius:9px;font-family:inherit}
 button{width:100%;padding:13px;border:0;border-radius:10px;font-family:inherit;font-weight:900;cursor:pointer;margin-top:9px}
+button:disabled{opacity:.5;cursor:not-allowed}
 .primary{background:#a3a785;color:#171912}
 .secondary{background:#30372a;color:white}
 .msg{font-size:13px;overflow-wrap:anywhere}
 a{color:#c0c79e;text-decoration:none}
+.profile{text-align:center;background:#151912;border:1px solid #414735;border-radius:14px;padding:20px;margin-top:18px}
+.avatar{width:110px;height:110px;border-radius:50%;object-fit:cover;background:#30372a;border:3px solid #a3a785}
+.username{font-size:20px;font-weight:900;margin:10px 0 0;color:#e7e9d8}
+.display{font-size:13px;color:#a5ad95;margin:3px 0}
+.hidden{display:none!important}
 </style>
 </head>
 <body>
 <div class="wrap">
 <div class="logo">KAREN STORE</div>
+
 <div class="card">
-<h2>مرحبًا بك</h2>
-<p>سجّل الدخول أو أنشئ حسابك للبدء بالتسوق وحفظ طلباتك.</p>
-<label>البريد الإلكتروني</label>
-<input id="email" type="email" autocomplete="email" placeholder="example@email.com">
-<label>كلمة المرور</label>
-<input id="password" type="password" autocomplete="current-password" placeholder="8 أحرف على الأقل">
-<button class="primary" onclick="register()">إنشاء حساب</button>
-<button class="secondary" onclick="login()">تسجيل الدخول</button>
-<p id="authMessage" class="msg"></p>
+<h2>اختر حساب Roblox</h2>
+<p>اكتب اسم حساب Roblox للبحث عنه وعرض صورته قبل المتابعة.</p>
+
+<label>اسم المستخدم</label>
+<input id="username" maxlength="20" autocomplete="off"
+placeholder="Roblox Username">
+
+<button class="primary" id="searchBtn" onclick="searchAccount()">بحث عن الحساب</button>
+
+<div id="profileBox" class="profile hidden">
+<img id="avatar" class="avatar" alt="Roblox Avatar">
+<div id="foundUsername" class="username"></div>
+<div id="displayName" class="display"></div>
+
+<button class="primary" onclick="confirmAccount()">
+إيه، هذا حسابي — أكمل التسجيل
+</button>
+
+<button class="secondary" onclick="editAccount()">
+لا، أعدّل اسم حسابي
+</button>
 </div>
-<div class="card">
-<h2>اسم حساب Roblox</h2>
-<p>أدخل اسم حسابك. يجب أن يتكون من 4 أحرف على الأقل.</p>
-<label>Roblox Username</label>
-<input id="roblox" maxlength="30" placeholder="Ahmad_roblox2222">
-<button class="primary" onclick="saveUsername()">حفظ اسم الحساب</button>
-<p id="robloxMessage" class="msg"></p>
+
+<p id="message" class="msg"></p>
 </div>
-<div style="text-align:center"><a href="index.html">العودة إلى KAREN STORE</a></div>
+
+<div style="text-align:center">
+<a href="index.html">العودة إلى KAREN STORE</a>
 </div>
+</div>
+
 <script>
 const SUPABASE_URL="https://jwikjdbqlzucmkihmyci.supabase.co";
-const SUPABASE_KEY="sb_publishable_RWwEfQJdI0GHddFsqCSYR_KPGqRYR";
+const SUPABASE_KEY="sb_publishable_RWwEfQJdI0GHddFsqCSYRQ_KPGqRYR";
 const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 
-async function register(){
- const email=document.getElementById("email").value.trim();
- const password=document.getElementById("password").value;
- if(!email||password.length<8){document.getElementById("authMessage").textContent="أدخل بريدًا صحيحًا وكلمة مرور من 8 أحرف على الأقل.";return}
- const {data,error}=await db.auth.signUp({email,password});
- document.getElementById("authMessage").textContent=error?error.message:"تم إنشاء الحساب. إذا طُلب منك تأكيد البريد، افتح رسالة التأكيد.";
- if(data.session){document.getElementById("authMessage").textContent="تم إنشاء الحساب وتسجيل الدخول."}
-}
+let selectedAccount=null;
 
-async function login(){
- const email=document.getElementById("email").value.trim();
- const password=document.getElementById("password").value;
- const {error}=await db.auth.signInWithPassword({email,password});
- document.getElementById("authMessage").textContent=error?error.message:"تم تسجيل الدخول بنجاح.";
- if(!error)setTimeout(()=>location.href="index.html",700);
-}
+const $=id=>document.getElementById(id);
 
-async function saveUsername(){
- const {data:{user}}=await db.auth.getUser();
- if(!user){document.getElementById("robloxMessage").textContent="سجّل الدخول أولًا.";return}
- const name=document.getElementById("roblox").value.trim();
- if(name.length<4){document.getElementById("robloxMessage").textContent="الاسم يجب أن يكون 4 أحرف على الأقل.";return}
- const {error}=await db.rpc("set_my_roblox_username",{p_username:name});
- document.getElementById("robloxMessage").textContent=error?error.message:"تم حفظ اسم Roblox بنجاح.";
-}
-async function init(){
- const {data:{session}}=await db.auth.getSession();
- if(session){
-  const {data:p}=await db.from("profiles").select("roblox_username").eq("id",session.user.id).maybeSingle();
-  if(p?.roblox_username)document.getElementById("roblox").value=p.roblox_username;
-  document.getElementById("authMessage").textContent="أنت مسجل الدخول بالفعل.";
+async function searchAccount(){
+ const username=$("username").value.trim();
+ const message=$("message");
+ const button=$("searchBtn");
+
+ $("profileBox").classList.add("hidden");
+ selectedAccount=null;
+
+ if(!/^[A-Za-z0-9_]{3,20}$/.test(username)){
+  message.textContent="اكتب اسم مستخدم صحيحًا.";
+  return;
+ }
+
+ button.disabled=true;
+ message.textContent="جاري البحث عن الحساب...";
+
+ try{
+  const response=await fetch(
+   "https://users.roblox.com/v1/usernames/users",
+   {
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({
+     usernames:[username],
+     excludeBannedUsers:true
+    })
+   }
+  );
+
+  if(!response.ok)throw new Error("تعذر الاتصال بروبلوكس.");
+
+  const result=await response.json();
+  const account=result.data?.[0];
+
+  if(!account){
+   message.textContent="لم يتم العثور على هذا الحساب.";
+   return;
+  }
+
+  const imageResponse=await fetch(
+   "https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds="+
+   account.id+"&size=150x150&format=Png&isCircular=true"
+  );
+
+  if(!imageResponse.ok)throw new Error("تعذر تحميل صورة الحساب.");
+
+  const imageData=await imageResponse.json();
+  const image=imageData.data?.[0]?.imageUrl;
+
+  if(!image)throw new Error("صورة الحساب غير متاحة.");
+
+  selectedAccount={
+   id:account.id,
+   username:account.name,
+   displayName:account.displayName,
+   avatar:image
+  };
+
+  $("avatar").src=image;
+  $("foundUsername").textContent="@"+account.name;
+  $("displayName").textContent="الاسم الظاهر: "+account.displayName;
+
+  $("profileBox").classList.remove("hidden");
+  message.textContent="تم العثور على الحساب. تأكد أنه الحساب الذي تقصده.";
+
+ }catch(error){
+  message.textContent=error.message||"حدث خطأ أثناء البحث.";
+ }finally{
+  button.disabled=false;
  }
 }
-init();
+
+function editAccount(){
+ selectedAccount=null;
+ $("profileBox").classList.add("hidden");
+ $("username").focus();
+ $("message").textContent="عدّل الاسم وابحث مرة أخرى.";
+}
+
+function confirmAccount(){
+ if(!selectedAccount)return;
+
+ sessionStorage.setItem(
+  "karen_selected_roblox",
+  JSON.stringify(selectedAccount)
+ );
+
+ $("message").textContent=
+  "تم تأكيد اختيار الحساب. هذا يؤكد اختيار الاسم فقط ولا يثبت ملكية الحساب.";
+ alert("تم اختيار الحساب بنجاح.");
+
+ location.href="index.html";
+}
 </script>
 </body>
 </html>
