@@ -40,7 +40,7 @@ a{color:#c0c79e;text-decoration:none}
   <p>اكتب اسم حساب Roblox للبحث عنه وعرض صورته قبل المتابعة.</p>
 
   <label>Roblox Username</label>
-  <input id="roblox" maxlength="30" autocomplete="off" placeholder="اكتب اسم حسابك">
+  <input id="roblox" maxlength="20" autocomplete="off" placeholder="اكتب اسم حسابك">
 
   <button class="primary" id="searchButton" onclick="searchAccount()">البحث عن الحساب</button>
 
@@ -111,8 +111,8 @@ async function searchAccount(){
   return;
  }
 
- if(!/^[a-zA-Z0-9_]+$/.test(name)){
-  message("استخدم الحروف والأرقام والشرطة السفلية فقط.");
+ if(name.length>20||!/^[a-zA-Z0-9_]+$/.test(name)){
+  message("استخدم من 4 إلى 20 حرفًا أو رقمًا أو شرطة سفلية فقط.");
   return;
  }
 
@@ -123,29 +123,35 @@ async function searchAccount(){
  $("passwordBox").classList.add("hidden");
  $("normalAuth").classList.add("hidden");
  selectedAccount=null;
- message("");
+ message("جاري الاتصال بخدمة البحث...");
 
  try{
   const response=await fetch(ROBLOX_LOOKUP_URL,{
    method:"POST",
    headers:{
     "Content-Type":"application/json",
-    "apikey":SUPABASE_KEY,
-    "Authorization":"Bearer "+SUPABASE_KEY
+    "apikey":SUPABASE_KEY
    },
    body:JSON.stringify({username:name})
   });
 
-  const result=await response.json();
+  const raw=await response.text();
+  let result;
+
+  try{
+   result=JSON.parse(raw);
+  }catch{
+   throw new Error("رد غير مفهوم من الخادم: "+raw.slice(0,250));
+  }
 
   if(!response.ok){
-   throw new Error(result.error||"تعذر العثور على الحساب.");
+   throw new Error("HTTP "+response.status+": "+(result.error||result.message||raw));
   }
 
   const account=result.user;
 
   if(!result.success||!account||!account.id){
-   throw new Error("لم يتم العثور على الحساب.");
+   throw new Error(result.error||"لم يتم العثور على الحساب.");
   }
 
   selectedAccount={
@@ -164,7 +170,7 @@ async function searchAccount(){
   message("تم العثور على الحساب. تأكد من أنه الحساب الصحيح.");
 
  }catch(error){
-  message(error.message||"تعذر تحميل الحساب. جرّب مرة أخرى.");
+  message("تفاصيل الخطأ: "+(error.message||"تعذر تحميل الحساب."));
  }finally{
   searching=false;
   $("searchButton").disabled=false;
@@ -229,10 +235,17 @@ async function ownerLogin(){
    })
   });
 
-  const result=await response.json();
+  const raw=await response.text();
+  let result;
+
+  try{
+   result=JSON.parse(raw);
+  }catch{
+   throw new Error("رد غير مفهوم من خدمة الأونر.");
+  }
 
   if(!response.ok){
-   throw new Error(result.error||"فشل تسجيل دخول الأونر.");
+   throw new Error(result.error||result.message||"فشل تسجيل دخول الأونر.");
   }
 
   if(!result.session?.access_token||!result.session?.refresh_token){
