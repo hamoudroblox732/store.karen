@@ -53,7 +53,7 @@ a{color:#c0c79e;text-decoration:none}
     </div>
    </div>
    <p>هل هذا حسابك؟</p>
-   <button class="primary" onclick="confirmAccount()">إيه، هذا حسابي — أكمل التسجيل</button>
+   <button class="primary" onclick="confirmAccount()">إيه، هذا حسابي — أكمل</button>
    <button class="secondary" onclick="editUsername()">لا، أعدّل اسم حسابي</button>
   </div>
 
@@ -67,11 +67,8 @@ a{color:#c0c79e;text-decoration:none}
  </div>
 
  <div class="card hidden" id="normalAuth">
-  <h2>تسجيل الحساب</h2>
-  <p>لإنشاء حساب المتجر وحفظ الرصيد والطلبات، سجّل الدخول أو أنشئ حسابًا.</p>
-
-  <label>البريد الإلكتروني</label>
-  <input id="email" type="email" autocomplete="email" placeholder="example@email.com">
+  <h2>حساب المتجر</h2>
+  <p id="accountName"></p>
 
   <label>كلمة المرور</label>
   <input id="password" type="password" autocomplete="new-password" placeholder="8 أحرف على الأقل">
@@ -99,6 +96,10 @@ let searching=false;
 
 function message(text){
  $("message").textContent=text;
+}
+
+function internalEmail(account){
+ return "rbx_"+account.id+"@users.karen-store.invalid";
 }
 
 async function searchAccount(){
@@ -184,6 +185,7 @@ function editUsername(){
  $("passwordBox").classList.add("hidden");
  $("normalAuth").classList.add("hidden");
  $("ownerPassword").value="";
+ $("password").value="";
  $("roblox").focus();
  message("عدّل الاسم ثم ابحث مرة أخرى.");
 }
@@ -199,7 +201,9 @@ function confirmAccount(){
  }
 
  $("normalAuth").classList.remove("hidden");
- message("تم اختيار الحساب. سجّل الدخول أو أنشئ حساب المتجر.");
+ $("accountName").textContent="الحساب المحدد: @"+selectedAccount.name;
+ $("password").value="";
+ $("authMessage").textContent="أنشئ حسابًا جديدًا أو سجّل دخولك.";
  $("normalAuth").scrollIntoView({behavior:"smooth"});
 }
 
@@ -259,7 +263,6 @@ async function ownerLogin(){
 
   if(error)throw error;
 
-  message("تم تسجيل دخول الأونر بنجاح.");
   location.href="admin.html";
 
  }catch(error){
@@ -276,26 +279,26 @@ async function register(){
   return;
  }
 
- const email=$("email").value.trim();
  const password=$("password").value;
 
- if(!email||password.length<8){
-  $("authMessage").textContent="أدخل بريدًا صحيحًا وكلمة مرور من 8 أحرف على الأقل.";
+ if(password.length<8){
+  $("authMessage").textContent="كلمة المرور يجب أن تكون 8 أحرف على الأقل.";
   return;
  }
 
  $("registerButton").disabled=true;
+ $("loginButton").disabled=true;
 
  try{
-  const {data,error}=await db.auth.signUp({email,password});
+  const {data,error}=await db.auth.signUp({
+   email:internalEmail(selectedAccount),
+   password
+  });
 
-  if(error){
-   $("authMessage").textContent=error.message;
-   return;
-  }
+  if(error)throw error;
 
   if(!data.session){
-   $("authMessage").textContent="تم إنشاء الحساب. أكّد بريدك الإلكتروني إذا طلب Supabase ذلك، ثم سجّل الدخول.";
+   $("authMessage").textContent="لم يتم إنشاء جلسة دخول. تأكد من إيقاف تأكيد البريد في إعدادات Supabase.";
    return;
   }
 
@@ -307,6 +310,7 @@ async function register(){
   $("authMessage").textContent=error.message;
  }finally{
   $("registerButton").disabled=false;
+  $("loginButton").disabled=false;
  }
 }
 
@@ -316,23 +320,23 @@ async function login(){
   return;
  }
 
- const email=$("email").value.trim();
  const password=$("password").value;
 
- if(!email||!password){
-  $("authMessage").textContent="أدخل البريد الإلكتروني وكلمة المرور.";
+ if(!password){
+  $("authMessage").textContent="أدخل كلمة المرور.";
   return;
  }
 
  $("loginButton").disabled=true;
+ $("registerButton").disabled=true;
 
  try{
-  const {error}=await db.auth.signInWithPassword({email,password});
+  const {error}=await db.auth.signInWithPassword({
+   email:internalEmail(selectedAccount),
+   password
+  });
 
-  if(error){
-   $("authMessage").textContent=error.message;
-   return;
-  }
+  if(error)throw error;
 
   if(!await saveSelectedUsername())return;
 
@@ -342,6 +346,7 @@ async function login(){
   $("authMessage").textContent=error.message;
  }finally{
   $("loginButton").disabled=false;
+  $("registerButton").disabled=false;
  }
 }
 
@@ -369,8 +374,8 @@ async function init(){
  const {data:{session}}=await db.auth.getSession();
 
  if(session){
-  $("authMessage").textContent="أنت مسجل الدخول بالفعل.";
   $("normalAuth").classList.remove("hidden");
+  $("authMessage").textContent="أنت مسجل الدخول بالفعل.";
 
   const {data:p}=await db.from("profiles")
    .select("roblox_username")
