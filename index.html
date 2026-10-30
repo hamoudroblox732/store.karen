@@ -10,7 +10,7 @@
 <style>
 *{box-sizing:border-box}
 body{margin:0;background:#11130f;color:#f0f0e8;font-family:Cairo,sans-serif}
-header{height:auto;min-height:75px;padding:14px 5%;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;background:#191c15;border-bottom:1px solid #343b2c}
+header{min-height:75px;padding:14px 5%;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;background:#191c15;border-bottom:1px solid #343b2c}
 .logo{font-size:24px;font-weight:900;color:#c0c79e;letter-spacing:1px}
 nav{display:flex;gap:8px;flex-wrap:wrap}
 button{font-family:inherit;border:0;border-radius:10px;padding:11px 16px;font-weight:800;cursor:pointer}
@@ -25,17 +25,17 @@ main{width:91%;max-width:1150px;margin:28px auto;min-height:65vh}
 .hero p{color:#c2c7b2;max-width:550px;line-height:2}
 .eyebrow{color:#c0c79e;font-size:12px;letter-spacing:3px;font-weight:900}
 .section{display:none}.section.active{display:block}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px}
-.card{background:#1b1f18;border:1px solid #343b2c;border-radius:16px;padding:17px}
-.card img{width:100%;height:165px;object-fit:cover;border-radius:11px;background:#252a20}
-.card h3{margin:12px 0 5px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(165px,1fr));gap:13px}
+.card{background:#1b1f18;border:1px solid #343b2c;border-radius:15px;padding:13px;min-width:0}
+.product-card img{width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:10px;background:#252a20}
+.product-card h3{margin:9px 0 4px;font-size:15px}
+.product-card .muted{margin:5px 0}
 .price{color:#c0c79e;font-weight:900}
-.muted{color:#9da48e;font-size:13px;line-height:1.8}
+.muted{color:#9da48e;font-size:12px;line-height:1.8}
 input,textarea{width:100%;background:#11140f;color:#fff;border:1px solid #414735;border-radius:10px;padding:13px;margin:7px 0 13px;font-family:inherit}
 label{font-size:13px;color:#c0c6ad}
 .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 .row>*{flex:1}
-.stat{font-size:29px;font-weight:900;color:#c0c79e}
 .badge{display:inline-block;background:#303827;color:#d0d7b1;border-radius:20px;padding:4px 10px;font-size:11px}
 footer{text-align:center;padding:30px;color:#838a76;border-top:1px solid #292e24}
 .hidden{display:none!important}
@@ -43,8 +43,14 @@ footer{text-align:center;padding:30px;color:#838a76;border-top:1px solid #292e24
 .quantity{display:flex;gap:10px;align-items:center;margin-top:10px;flex-wrap:wrap}
 .quantity button{padding:5px 13px}
 .total{font-size:23px;color:#c0c79e;font-weight:900}
-.notice{padding:13px;background:#282d20;border:1px solid #4b5538;border-radius:12px;color:#d8ddc8;margin:12px 0}
-@media(max-width:600px){header{padding:12px 3%}.logo{font-size:19px}nav button{padding:9px;font-size:11px}.hero{padding:35px 20px}}
+@media(max-width:600px){
+ header{padding:12px 3%}
+ .logo{font-size:19px}
+ nav button{padding:9px;font-size:11px}
+ .hero{padding:35px 20px}
+ .grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+ .product-card{padding:10px}
+}
 </style>
 </head>
 <body>
@@ -55,7 +61,7 @@ footer{text-align:center;padding:30px;color:#838a76;border-top:1px solid #292e24
   <button class="secondary" onclick="show('store')">المتجر</button>
   <button class="secondary" onclick="show('cart')">السلة <span id="cartCount" class="cart-count">0</span></button>
   <button class="secondary" onclick="show('account')">حسابي</button>
-  <button class="primary hidden" id="adminButton" onclick="location.href='admin.html'">OWNER DASHBOARD</button>
+  <button class="primary hidden" id="adminButton" onclick="location.href='admin.html'">ADMIN DASHBOARD</button>
  </nav>
 </header>
 
@@ -69,9 +75,9 @@ footer{text-align:center;padding:30px;color:#838a76;border-top:1px solid #292e24
   <button class="primary" onclick="document.getElementById('products').scrollIntoView({behavior:'smooth'})">اكتشف المنتجات</button>
  </div>
 
- <div class="row" style="justify-content:space-between;margin:30px 0 18px">
-  <div><div class="eyebrow">OUR COLLECTION</div><h2>اكتشف المنتجات</h2></div>
-  <div class="price" id="balance">الرصيد: --</div>
+ <div style="margin:30px 0 18px">
+  <div class="eyebrow">OUR COLLECTION</div>
+  <h2>اكتشف المنتجات</h2>
  </div>
 
  <div class="grid" id="products">جاري تحميل المنتجات...</div>
@@ -81,8 +87,7 @@ footer{text-align:center;padding:30px;color:#838a76;border-top:1px solid #292e24
  <h2>سلة التسوق</h2>
  <div id="cartItems"></div>
  <div class="card">
-  <div class="total" id="cartTotal">الإجمالي: 0</div>
-  <p class="muted">الرصيد المستخدم عملة افتراضية داخل المتجر، وليس Robux حقيقية.</p>
+  <div class="total" id="cartTotal">الإجمالي: R$ 0</div>
   <button class="primary" style="width:100%" id="checkoutButton" onclick="checkout()">تأكيد الشراء</button>
   <button class="secondary" style="width:100%;margin-top:8px" onclick="show('store')">متابعة التسوق</button>
  </div>
@@ -169,15 +174,15 @@ async function loadProducts(){
  }
 
  box.innerHTML=products.map(p=>`
-  <article class="card">
+  <article class="card product-card">
    <img
-    src="${safe(p.image_url||"https://placehold.co/500x300/252d1c/c0c79e?text=KAREN+STORE")}"
+    src="${safe(p.image_url||"https://placehold.co/500x500/252d1c/c0c79e?text=KAREN+STORE")}"
     alt="${safe(p.name)}"
-    onerror="this.src='https://placehold.co/500x300/252d1c/c0c79e?text=KAREN+STORE'">
+    onerror="this.src='https://placehold.co/500x500/252d1c/c0c79e?text=KAREN+STORE'">
    <span class="badge">KAREN COLLECTION</span>
    <h3>${safe(p.name)}</h3>
    <p class="muted">${safe(p.description)}</p>
-   <div class="price">${Number(p.price)} نقطة</div>
+   <div class="price">R$ ${Number(p.price)}</div>
    <p class="muted">المتوفر: ${Number(p.stock)}</p>
    <button class="primary" style="width:100%"
     ${Number(p.stock)<1?"disabled":""}
@@ -186,8 +191,6 @@ async function loadProducts(){
    </button>
   </article>
  `).join("");
-
- await loadBalance();
 }
 
 function addCart(id){
@@ -218,25 +221,25 @@ function renderCart(){
 
  if(!cart.length){
   $("cartItems").innerHTML="<div class='card'>سلتك فارغة حاليًا.</div>";
-  $("cartTotal").textContent="الإجمالي: 0";
+  $("cartTotal").textContent="الإجمالي: R$ 0";
   return;
  }
 
  $("cartItems").innerHTML=cart.map(x=>`
   <div class="card" style="margin-bottom:12px">
    <b>${safe(x.name)}</b>
-   <p class="price">${x.price} نقطة للقطعة</p>
+   <p class="price">R$ ${x.price} للقطعة</p>
    <div class="quantity">
     <button class="secondary" onclick="changeQty('${x.id}',-1)">−</button>
     <b>${x.quantity}</b>
     <button class="secondary" onclick="changeQty('${x.id}',1)">+</button>
     <button class="danger" onclick="removeCart('${x.id}')">إزالة</button>
    </div>
-   <p class="muted">المجموع: ${x.price*x.quantity}</p>
+   <p class="muted">المجموع: R$ ${x.price*x.quantity}</p>
   </div>
  `).join("");
 
- $("cartTotal").textContent="الإجمالي: "+
+ $("cartTotal").textContent="الإجمالي: R$ "+
   cart.reduce((n,x)=>n+x.price*x.quantity,0);
 }
 
@@ -288,7 +291,7 @@ async function checkout(){
   return;
  }
 
- if(!confirm("تأكيد شراء المنتجات من رصيدك الافتراضي؟"))return;
+ if(!confirm("تأكيد شراء المنتجات؟"))return;
 
  checkoutRunning=true;
  $("checkoutButton").disabled=true;
@@ -319,7 +322,6 @@ async function checkout(){
    cart=cart.filter(x=>!completed.includes(x.id));
    renderCart();
    await loadProducts();
-   await loadBalance();
    await loadMyOrders();
 
    alert("تم إرسال الطلب بنجاح.");
@@ -335,25 +337,6 @@ async function checkout(){
  }
 }
 
-async function loadBalance(){
- const u=await user();
-
- if(!u){
-  $("balance").textContent="سجّل الدخول";
-  return;
- }
-
- const {data,error}=await db
-  .from("wallets")
-  .select("balance")
-  .eq("user_id",u.id)
-  .maybeSingle();
-
- $("balance").textContent=error
-  ?"تعذر تحميل الرصيد"
-  :"رصيدك: "+(data?.balance??0)+" نقطة";
-}
-
 async function loadAccount(){
  const u=await user();
 
@@ -363,44 +346,39 @@ async function loadAccount(){
 
  if(!u){
   $("accountInfo").textContent="أنت غير مسجل الدخول.";
-  $("balance").textContent="سجّل الدخول";
   return;
  }
 
- const [{data:p,error:profileError},{data:w,error:walletError}]=await Promise.all([
-  db.from("profiles")
-   .select("roblox_username")
-   .eq("id",u.id)
-   .maybeSingle(),
+ const {data:p,error:profileError}=await db
+  .from("profiles")
+  .select("roblox_username")
+  .eq("id",u.id)
+  .maybeSingle();
 
-  db.from("wallets")
-   .select("balance")
-   .eq("user_id",u.id)
-   .maybeSingle()
- ]);
-
- if(profileError||walletError){
+ if(profileError){
   $("accountInfo").textContent="تعذر تحميل بيانات الحساب.";
   return;
  }
 
- const {data:admin}=await db
+ const {data:admin,error:adminError}=await db
   .from("admin_users")
   .select("user_id")
   .eq("user_id",u.id)
   .maybeSingle();
 
+ if(adminError){
+  $("accountInfo").textContent="تعذر التحقق من صلاحيات الحساب.";
+  return;
+ }
+
  $("accountInfo").innerHTML=`
   اسم Roblox: ${safe(p?.roblox_username||"لم تضفه بعد")}
-  <br>
-  الرصيد: ${Number(w?.balance??0)} نقطة
   <br><br>
   <button class="secondary" onclick="show('ordersSection')">عرض طلباتي</button>
-  ${admin?'<p class="price">OWNER ACCESS</p>':""}
+  ${admin?'<p class="price">ADMIN CONTROL</p>':""}
  `;
 
  $("adminButton").classList.toggle("hidden",!admin);
- await loadBalance();
 }
 
 async function loadMyOrders(){
@@ -427,7 +405,7 @@ async function loadMyOrders(){
  $("myOrders").innerHTML=(data||[]).map(o=>`
   <div class="card">
    <b>${safe(o.product_name)}</b>
-   <p>${Number(o.quantity)} × ${Number(o.unit_price)} = ${Number(o.total_price)} نقطة</p>
+   <p>${Number(o.quantity)} × R$ ${Number(o.unit_price)} = R$ ${Number(o.total_price)}</p>
    <span class="badge">${safe(o.status)}</span>
    ${o.rejection_reason
     ?`<p class="muted">${safe(o.rejection_reason)}</p>`
