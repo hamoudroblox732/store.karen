@@ -43,6 +43,12 @@ footer{text-align:center;padding:30px;color:#838a76;border-top:1px solid #292e24
 .quantity{display:flex;gap:10px;align-items:center;margin-top:10px;flex-wrap:wrap}
 .quantity button{padding:5px 13px}
 .total{font-size:23px;color:#c0c79e;font-weight:900}
+.product-detail-image{width:100%;max-width:440px;aspect-ratio:1/1;object-fit:cover;border-radius:15px;background:#252a20}
+.method-card{padding:22px;text-align:center;cursor:pointer;transition:.2s}
+.method-card:hover{border-color:#a3a785;transform:translateY(-2px)}
+.method-card h3{color:#c0c79e}
+.order-card{margin-bottom:12px}
+.delivery-note{white-space:pre-wrap;background:#11140f;padding:13px;border-radius:10px;margin-top:10px;line-height:2}
 @media(max-width:600px){
  header{padding:12px 3%}
  .logo{font-size:19px}
@@ -74,13 +80,18 @@ footer{text-align:center;padding:30px;color:#838a76;border-top:1px solid #292e24
   <p>اكتشف مجموعتنا، اختر ما يناسبك، وتابع طلبك من مكان واحد. تجربة تسوق مختلفة تبدأ من هنا.</p>
   <button class="primary" onclick="document.getElementById('products').scrollIntoView({behavior:'smooth'})">اكتشف المنتجات</button>
  </div>
-
  <div style="margin:30px 0 18px">
   <div class="eyebrow">OUR COLLECTION</div>
   <h2>اكتشف المنتجات</h2>
  </div>
-
  <div class="grid" id="products">جاري تحميل المنتجات...</div>
+</section>
+
+<section id="productDetails" class="section">
+ <button class="secondary" onclick="show('store')">رجوع للمتجر</button>
+ <div class="card" style="margin-top:15px">
+  <div id="detailContent"></div>
+ </div>
 </section>
 
 <section id="cart" class="section">
@@ -88,8 +99,42 @@ footer{text-align:center;padding:30px;color:#838a76;border-top:1px solid #292e24
  <div id="cartItems"></div>
  <div class="card">
   <div class="total" id="cartTotal">الإجمالي: R$ 0</div>
-  <button class="primary" style="width:100%" id="checkoutButton" onclick="checkout()">تأكيد الشراء</button>
+  <button class="primary" style="width:100%" id="checkoutButton" onclick="checkout()">إتمام الطلب</button>
   <button class="secondary" style="width:100%;margin-top:8px" onclick="show('store')">متابعة التسوق</button>
+ </div>
+</section>
+
+<section id="paymentChoice" class="section">
+ <div class="card">
+  <div class="eyebrow">PAYMENT METHOD</div>
+  <h2>اختر طريقة الشراء</h2>
+  <p class="muted">اختر الطريقة المناسبة لك. بعد اختيارك سيتم تسجيل طلبك وإرساله للمراجعة.</p>
+  <div class="grid" style="margin-top:20px">
+   <div class="card method-card" onclick="choosePayment('gamepass')">
+    <div style="font-size:35px">🎮</div>
+    <h3>شراء Game Pass</h3>
+    <p class="muted">الانتقال إلى صفحة متجر الماب لشراء Game Pass.</p>
+    <button class="primary" style="width:100%">اختيار</button>
+   </div>
+   <div class="card method-card" onclick="choosePayment('transfer')">
+    <div style="font-size:35px">💰</div>
+    <h3>تحويل Robux</h3>
+    <p class="muted">الانتقال إلى حساب Roblox الخاص بالمتجر.</p>
+    <button class="primary" style="width:100%">اختيار</button>
+   </div>
+  </div>
+  <button class="secondary" style="width:100%;margin-top:15px" onclick="show('cart')">رجوع للسلة</button>
+ </div>
+</section>
+
+<section id="orderConfirmation" class="section">
+ <div class="card" style="max-width:600px;margin:30px auto;text-align:center;padding:30px">
+  <div style="font-size:48px">✓</div>
+  <h2 style="color:#c0c79e">تم تسجيل طلبك بنجاح</h2>
+  <p>طلبك الآن قيد المراجعة. سيتم التحقق من عملية الشراء قبل اعتمادها وتسليم المنتج.</p>
+  <p class="muted" id="confirmationMethod"></p>
+  <button class="primary" id="continuePaymentButton" style="width:100%">الانتقال إلى Roblox</button>
+  <button class="secondary" style="width:100%;margin-top:8px" onclick="show('ordersSection')">متابعة طلباتي</button>
  </div>
 </section>
 
@@ -105,6 +150,7 @@ footer{text-align:center;padding:30px;color:#838a76;border-top:1px solid #292e24
 
 <section id="ordersSection" class="section">
  <h2>طلباتي</h2>
+ <p class="muted">تابع حالة طلباتك وتفاصيل التسليم من هنا.</p>
  <div id="myOrders"></div>
 </section>
 
@@ -121,9 +167,14 @@ const SUPABASE_URL="https://jwikjdbqlzucmkihmyci.supabase.co";
 const SUPABASE_KEY="sb_publishable_RWwEfQJdI0GHddFsqCSYRQ_KGPGqRYR";
 const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 
+const GAMEPASS_URL="https://www.roblox.com/games/17328558726/Karen#!/store";
+const TRANSFER_URL="https://www.roblox.com/users/5837735350/profile";
+
 let cart=[];
 let products=[];
 let checkoutRunning=false;
+let selectedPaymentUrl="";
+let selectedPaymentName="";
 
 const $=id=>document.getElementById(id);
 
@@ -181,9 +232,11 @@ async function loadProducts(){
     onerror="this.src='https://placehold.co/500x500/252d1c/c0c79e?text=KAREN+STORE'">
    <span class="badge">KAREN COLLECTION</span>
    <h3>${safe(p.name)}</h3>
-   <p class="muted">${safe(p.description)}</p>
+   <p class="muted">${safe(p.description||"")}</p>
    <div class="price">R$ ${Number(p.price)}</div>
    <p class="muted">المتوفر: ${Number(p.stock)}</p>
+   <button class="secondary" style="width:100%;margin-bottom:7px"
+    onclick="openProduct('${p.id}')">عرض التفاصيل</button>
    <button class="primary" style="width:100%"
     ${Number(p.stock)<1?"disabled":""}
     onclick="addCart('${p.id}')">
@@ -191,6 +244,32 @@ async function loadProducts(){
    </button>
   </article>
  `).join("");
+}
+
+function openProduct(id){
+ const p=products.find(x=>String(x.id)===String(id));
+ if(!p)return;
+
+ $("detailContent").innerHTML=`
+  <div style="text-align:center">
+   <img class="product-detail-image"
+    src="${safe(p.image_url||"https://placehold.co/500x500/252d1c/c0c79e?text=KAREN+STORE")}"
+    alt="${safe(p.name)}"
+    onerror="this.src='https://placehold.co/500x500/252d1c/c0c79e?text=KAREN+STORE'">
+  </div>
+  <div style="margin-top:20px">
+   <span class="badge">KAREN COLLECTION</span>
+   <h1>${safe(p.name)}</h1>
+   <div class="price" style="font-size:23px">R$ ${Number(p.price)}</div>
+   <h3>تفاصيل المنتج</h3>
+   <p style="line-height:2;white-space:pre-wrap">${safe(p.description||"لا توجد تفاصيل إضافية لهذا المنتج.")}</p>
+   <p class="muted">الكمية المتوفرة: ${Number(p.stock)}</p>
+   <button class="primary" style="width:100%"
+    ${Number(p.stock)<1?"disabled":""}
+    onclick="addCart('${p.id}');show('cart')">أضف إلى السلة</button>
+  </div>
+ `;
+ show("productDetails");
 }
 
 function addCart(id){
@@ -246,9 +325,7 @@ function renderCart(){
 function changeQty(id,d){
  const x=cart.find(x=>String(x.id)===String(id));
  if(!x)return;
-
  if(x.quantity+d<1||x.quantity+d>x.stock)return;
-
  x.quantity+=d;
  renderCart();
 }
@@ -264,7 +341,7 @@ async function checkout(){
  const u=await user();
 
  if(!u){
-  alert("سجّل الدخول أولًا لإتمام الشراء.");
+  alert("سجّل الدخول أولًا لإتمام الطلب.");
   location.href="register.html";
   return;
  }
@@ -291,49 +368,76 @@ async function checkout(){
   return;
  }
 
- if(!confirm("تأكيد شراء المنتجات؟"))return;
+ show("paymentChoice");
+}
+
+async function choosePayment(method){
+ if(checkoutRunning)return;
+
+ const u=await user();
+ if(!u){
+  alert("انتهت جلستك. سجّل الدخول مرة أخرى.");
+  location.href="register.html";
+  return;
+ }
+
+ if(!cart.length){
+  alert("السلة فارغة.");
+  show("cart");
+  return;
+ }
+
+ if(method==="gamepass"){
+  selectedPaymentUrl=GAMEPASS_URL;
+  selectedPaymentName="شراء Game Pass";
+ }else if(method==="transfer"){
+  selectedPaymentUrl=TRANSFER_URL;
+  selectedPaymentName="تحويل Robux";
+ }else{
+  return;
+ }
 
  checkoutRunning=true;
- $("checkoutButton").disabled=true;
- $("checkoutButton").textContent="جاري تنفيذ الطلب...";
+
+ document.querySelectorAll(".method-card button").forEach(b=>b.disabled=true);
 
  try{
   const completed=[];
 
   for(const item of [...cart]){
-   const {error}=await db.rpc("purchase_product",{
+   const {data:orderId,error}=await db.rpc("purchase_product",{
     p_product_id:item.id,
     p_quantity:item.quantity
    });
 
    if(error){
-    alert(
-     completed.length
-      ?"تم تنفيذ بعض الطلبات قبل حدوث الخطأ. تحقق من صفحة طلباتي."
-      :"تعذر إتمام الطلب: "+error.message
-    );
-    break;
+    throw new Error(error.message);
    }
 
-   completed.push(item.id);
+   completed.push({
+    id:item.id,
+    orderId:orderId
+   });
   }
 
-  if(completed.length){
-   cart=cart.filter(x=>!completed.includes(x.id));
-   renderCart();
-   await loadProducts();
-   await loadMyOrders();
+  cart=[];
+  renderCart();
+  await loadProducts();
 
-   alert("تم إرسال الطلب بنجاح.");
-   await show("ordersSection");
-  }
+  $("confirmationMethod").textContent="طريقة الشراء المختارة: "+selectedPaymentName;
+  $("continuePaymentButton").onclick=()=>{
+   location.href=selectedPaymentUrl;
+  };
+
+  await show("orderConfirmation");
 
  }catch(error){
-  alert("حدث خطأ: "+error.message);
+  alert("تعذر تسجيل الطلب: "+error.message+
+   "\nإذا ظهرت لك هذه الرسالة، لا تكرر الشراء قبل مراجعة طلباتك.");
+  await loadMyOrders();
  }finally{
   checkoutRunning=false;
-  $("checkoutButton").disabled=false;
-  $("checkoutButton").textContent="تأكيد الشراء";
+  document.querySelectorAll(".method-card button").forEach(b=>b.disabled=false);
  }
 }
 
@@ -402,16 +506,25 @@ async function loadMyOrders(){
   return;
  }
 
- $("myOrders").innerHTML=(data||[]).map(o=>`
-  <div class="card">
-   <b>${safe(o.product_name)}</b>
-   <p>${Number(o.quantity)} × R$ ${Number(o.unit_price)} = R$ ${Number(o.total_price)}</p>
-   <span class="badge">${safe(o.status)}</span>
-   ${o.rejection_reason
-    ?`<p class="muted">${safe(o.rejection_reason)}</p>`
-    :""}
-  </div>
- `).join("")||"لا توجد طلبات.";
+ $("myOrders").innerHTML=(data||[]).map(o=>{
+  const delivered=String(o.status||"").toLowerCase()==="delivered"
+   ||String(o.status||"")==="تم التسليم";
+
+  return `
+   <div class="card order-card">
+    <b>${safe(o.product_name)}</b>
+    <p>الكمية: ${Number(o.quantity)}</p>
+    <span class="badge">${safe(o.status||"قيد المراجعة")}</span>
+    ${delivered?`
+     <h3 class="price">تم تسليم طلبك</h3>
+     <div class="delivery-note">${safe(o.delivery_note||"تم التسليم.")}</div>
+    `:""}
+    ${o.rejection_reason
+     ?`<p class="muted">${safe(o.rejection_reason)}</p>`
+     :""}
+   </div>
+  `;
+ }).join("")||"<div class='card'>لا توجد طلبات حتى الآن.</div>";
 }
 
 async function logout(){
