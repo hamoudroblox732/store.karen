@@ -4,7 +4,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>KAREN STORE | Owner</title>
+<title>KAREN STORE | ADMIN DASHBOARD</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 
@@ -37,7 +37,7 @@ button:hover{filter:brightness(1.08)}
  display:flex;flex-direction:column;gap:20px
 }
 .logo{font-size:23px;color:#c0c79e;font-weight:900;padding:0 10px}
-.sidebar small{display:block;color:var(--muted);font-size:11px;padding:0 10px}
+.sidebar small{display:block;color:var(--muted);font-size:11px;padding:0 10px;letter-spacing:1px}
 .nav{display:flex;flex-direction:column;gap:7px}
 .nav button{
  width:100%;text-align:right;background:transparent;color:#c6cbb9;
@@ -48,6 +48,7 @@ button:hover{filter:brightness(1.08)}
 .main{flex:1;min-width:0;padding:25px}
 .topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:25px}
 .topbar h1{font-size:24px;margin:0}
+.topbar .muted{letter-spacing:1px}
 .content{max-width:1200px;margin:auto}
 .panel{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:18px;margin-bottom:16px}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:12px}
@@ -56,7 +57,7 @@ button:hover{filter:brightness(1.08)}
 .stat strong{display:block;font-size:27px;color:#c0c79e;margin-top:5px}
 .section-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:15px}
 .section-head h2,.panel h2{font-size:18px;margin:0 0 12px}
-.card{background:#171b15;border:1px solid var(--border);border-radius:12px;padding:14px;margin:10px 0}
+.card{background:#171b15;border:1px solid var(--border);border-radius:12px;padding:12px;margin:9px 0}
 .card p{margin:7px 0}
 .row{display:flex;gap:9px;flex-wrap:wrap;align-items:center}
 .row>*{min-width:0}
@@ -67,7 +68,24 @@ input,textarea{width:100%;padding:12px;background:#11140f;color:white;border:1px
 .welcome{padding:24px}
 .welcome h2{font-size:22px;margin:0 0 7px}
 .quick-actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:16px}
-.mobile-menu{display:none}
+.product-grid{
+ display:grid;
+ grid-template-columns:repeat(auto-fill,minmax(145px,1fr));
+ gap:10px
+}
+.product-card{padding:10px;margin:0;min-width:0}
+.product-card img{
+ width:100%;
+ aspect-ratio:1/1;
+ object-fit:cover;
+ border-radius:9px;
+ background:#252a20
+}
+.product-card h3{font-size:14px;margin:8px 0 4px;overflow-wrap:anywhere}
+.product-card .muted{font-size:11px}
+.product-card .row{gap:6px}
+.product-card button{padding:8px 10px;font-size:12px;flex:1}
+.product-price{color:#c0c79e;font-weight:900;font-size:14px}
 @media(max-width:760px){
  .layout{display:block}
  .sidebar{
@@ -83,6 +101,7 @@ input,textarea{width:100%;padding:12px;background:#11140f;color:white;border:1px
  .main{padding:15px}
  .topbar h1{font-size:20px}
  .welcome{padding:18px}
+ .product-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
 </style>
 </head>
@@ -96,7 +115,7 @@ input,textarea{width:100%;padding:12px;background:#11140f;color:white;border:1px
   <div class="sidebar-head">
    <div>
     <div class="logo">KAREN STORE</div>
-    <small>OWNER CONTROL CENTER</small>
+    <small>ADMIN CONTROL</small>
    </div>
   </div>
 
@@ -119,16 +138,15 @@ input,textarea{width:100%;padding:12px;background:#11140f;color:white;border:1px
 
    <div class="topbar">
     <div>
-     <h1 id="pageTitle">الرئيسية</h1>
-     <div class="muted">إدارة وتحكم KAREN STORE</div>
+     <h1 id="pageTitle">ADMIN DASHBOARD</h1>
+     <div class="muted">ADMIN CONTROL · KAREN STORE</div>
     </div>
     <button onclick="refreshCurrent()">تحديث الصفحة</button>
    </div>
 
-   <!-- الرئيسية -->
    <section id="page-home" class="page">
     <div class="panel welcome">
-     <h2>مرحبًا بك في لوحة الأونر</h2>
+     <h2>ADMIN DASHBOARD</h2>
      <p class="muted">من هنا تقدر تدير منتجات المتجر والمشترين والطلبات.</p>
      <div class="quick-actions">
       <button onclick="location.href='add-product.html'">＋ إضافة منتج</button>
@@ -156,12 +174,11 @@ input,textarea{width:100%;padding:12px;background:#11140f;color:white;border:1px
      </div>
      <div class="stat">
       <span>إجمالي المبيعات المسلّمة</span>
-      <strong id="sales">0</strong>
+      <strong id="sales">R$ 0</strong>
      </div>
     </div>
    </section>
 
-   <!-- المنتجات -->
    <section id="page-products" class="page hidden">
     <div class="panel">
      <div class="section-head">
@@ -172,7 +189,6 @@ input,textarea{width:100%;padding:12px;background:#11140f;color:white;border:1px
     </div>
    </section>
 
-   <!-- المشترون -->
    <section id="page-buyers" class="page hidden">
     <div class="panel">
      <h2>المشترون</h2>
@@ -180,7 +196,6 @@ input,textarea{width:100%;padding:12px;background:#11140f;color:white;border:1px
     </div>
    </section>
 
-   <!-- الطلبات -->
    <section id="page-orders" class="page hidden">
     <div class="panel">
      <div class="section-head">
@@ -191,7 +206,6 @@ input,textarea{width:100%;padding:12px;background:#11140f;color:white;border:1px
     </div>
    </section>
 
-   <!-- الطلبات المعلقة -->
    <section id="page-pending" class="page hidden">
     <div class="panel">
      <div class="section-head">
@@ -233,7 +247,7 @@ let currentPage="home";
 let verified=false;
 
 const titles={
- home:"الرئيسية",
+ home:"ADMIN DASHBOARD",
  products:"المنتجات",
  buyers:"المشترون",
  orders:"كل الطلبات",
@@ -289,12 +303,12 @@ async function start(){
   if(adminError)throw adminError;
 
   if(!admin){
-   $("message").textContent="هذا الحساب لا يملك صلاحية الأونر.";
+   $("message").textContent="هذا الحساب لا يملك صلاحية الإدارة.";
    return;
   }
 
   verified=true;
-  $("message").textContent="تم التحقق من صلاحيات الأونر.";
+  $("message").textContent="تم التحقق من صلاحيات الإدارة.";
   $("app").classList.remove("hidden");
 
   await loadStats();
@@ -343,7 +357,7 @@ async function loadStats(){
   .filter(x=>x.status==="delivered")
   .reduce((n,x)=>n+Number(x.total_price||0),0);
 
- $("sales").textContent=totalSales.toLocaleString("en-US");
+ $("sales").textContent="R$ "+totalSales.toLocaleString("en-US");
 }
 
 async function loadProducts(){
@@ -362,27 +376,28 @@ async function loadProducts(){
 
  const rows=data||[];
 
- box.innerHTML=rows.map(p=>`
-  <div class="card">
-   <div class="row">
-    <div style="flex:1">
-     <b>${safe(p.name)}</b>
-     <p class="muted">
-      ${Number(p.price)} نقطة · المخزون ${Number(p.stock)}
-      · ${p.is_active?"نشط":"متوقف"}
-     </p>
-    </div>
+ box.innerHTML='<div class="product-grid">'+rows.map(p=>`
+  <div class="card product-card">
+   <img
+    src="${safe(p.image_url||"https://placehold.co/400x400/252d1c/c0c79e?text=KAREN")}"
+    alt="${safe(p.name)}"
+    onerror="this.src='https://placehold.co/400x400/252d1c/c0c79e?text=KAREN'">
+   <h3>${safe(p.name)}</h3>
+   <div class="product-price">R$ ${Number(p.price)}</div>
+   <p class="muted">المخزون: ${Number(p.stock)}</p>
+   <span class="badge">${p.is_active?"نشط":"متوقف"}</span>
+   <div class="row" style="margin-top:9px">
     <button class="secondary"
      onclick="editProduct('${safe(p.id)}',${Number(p.price)},${Number(p.stock)})">
      تعديل
     </button>
     <button class="danger"
      onclick="removeProduct('${safe(p.id)}')">
-     ${p.is_active?"إيقاف":"إعادة تفعيل"}
+     ${p.is_active?"إيقاف":"تفعيل"}
     </button>
    </div>
   </div>
- `).join("")||'<div class="empty">لا توجد منتجات.</div>';
+ `).join("")+'</div>'||'<div class="empty">لا توجد منتجات.</div>';
 
  $("productsCount").textContent=rows.length;
 }
@@ -544,7 +559,7 @@ async function loadOrders(filter){
     <b>${safe(p.roblox_username||"غير معروف")}</b>
     <p>${safe(o.product_name)} × ${Number(o.quantity)}</p>
     <p class="muted">
-     ${Number(o.total_price)} نقطة ·
+     R$ ${Number(o.total_price)} ·
      <span class="badge">${safe(o.status)}</span>
     </p>
     ${o.rejection_reason
